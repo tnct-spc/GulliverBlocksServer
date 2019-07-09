@@ -1,2 +1,2 @@
-./api/__pycash__/*
-./*.idea
+api/__pycash__
+*.idea
