@@ -1,2 +1,3 @@
-api/__pycash__
-*.idea
+.idea
+api/__pycache__
+
