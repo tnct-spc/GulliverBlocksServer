@@ -1,4 +1,5 @@
 from flask import Blueprint
+import bugsnag
 
 
 api_app = Blueprint('api_app', __name__)
