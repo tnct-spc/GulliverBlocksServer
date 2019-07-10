@@ -13,5 +13,6 @@ if __name__ == "__main__":
 
     bugsnag.configure(
         api_key=BUGSNAG_API_KEY,
-        project_root="."
+        project_root=".",
+        release_stage = "development",
     )
