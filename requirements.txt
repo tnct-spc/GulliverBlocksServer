@@ -1,1 +1,3 @@
 flask
+bugsnag[flask]
+python-dotenv
