@@ -8,7 +8,7 @@ if __name__ == "__main__":
     bugsnag.configure(
         api_key=BUGSNAG_API_KEY,
         project_root=".",
-        release_stage = "development",
+        release_stage = "FLASK_ENV",
     )
     port = int(os.environ.get("PORT", 5000))
 
