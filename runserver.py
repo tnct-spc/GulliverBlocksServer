@@ -1,6 +1,6 @@
 from api import app
 import bugsnag
-from settings import BUGSNAG_API_KEY
+from settings import BUGSNAG_API_KEY, FLASK_ENV
 import os
 
 
