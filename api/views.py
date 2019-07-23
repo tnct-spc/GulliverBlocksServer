@@ -1,5 +1,6 @@
 from flask import Blueprint, make_response, jsonify
-from datetime import datetime
+from api.models import Block
+from api._db import db
 
 
 api_app = Blueprint('api_app', __name__)
@@ -7,54 +8,21 @@ api_app = Blueprint('api_app', __name__)
 
 @api_app.route('/return_test_data/')
 def return_test_data():
+    blocks = db.session.query(Block)
     test_data = {
-"blocks":[
-{
-"ID":1,
-"colorID":1,
-"put":True,
-"time":1562920187.972499,
-"x":1,
-"y":2,
-"z":3
-},
-{
-"ID":2,
-"colorID":1,
-"put":True,
-"time":1562920187.97251,
-"x":1,
-"y":3,
-"z":3
-},
-{
-"ID":3,
-"colorID":1,
-"put":True,
-"time":1562920187.972519,
-"x":2,
-"y":2,
-"z":3
-},
-{
-"ID":4,
-"colorID":1,
-"put":True,
-"time":1562920187.972523,
-"x":1,
-"y":2,
-"z":4
-},
-{
-"ID":5,
-"colorID":1,
-"put":True,
-"time":1562920187.972528,
-"x":1,
-"y":2,
-"z":2
-}
-]
-}
-    
+        "blocks": []
+    }
+
+    for block in blocks:
+        tmp_dic = {
+            "ID": block.block_id,
+            "colorID": block.colorID,
+            "put": block.put,
+            "time": block.time,
+            "x": block.x,
+            "y": block.y,
+            "z": block.z
+        }
+        test_data["blocks"].append(tmp_dic)
+
     return make_response(jsonify(test_data))
