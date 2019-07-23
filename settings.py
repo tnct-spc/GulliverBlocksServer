@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+from flask_sqlalchemy import SQLAlchemy
+from api import app
 
 
 load_dotenv(verbose=True)
