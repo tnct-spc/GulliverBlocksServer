@@ -15,9 +15,8 @@ def return_test_data():
 
     for block in blocks:
         tmp_dic = {
-            "ID": block.block_id,
+            "ID": block.id,
             "colorID": block.colorID,
-            "put": block.put,
             "time": block.time,
             "x": block.x,
             "y": block.y,
