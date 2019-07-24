@@ -1,15 +1,20 @@
 from api._db import db
-from api.models import Block
+from api.models import Block, Map, Merge, MergeMap, RealSense
 from datetime import datetime
 
 
 if __name__ == "__main__":
+    map = Map()
+    map.name = "test_map"
+    db.session.add(map)
+    db.session.commit()
+
     blocks = [
-        Block(block_id=1, x=1, y=2, z=3, colorID=1, put=True, time=datetime.now().timestamp()),
-        Block(block_id=2, x=1, y=3, z=3, colorID=1, put=True, time=datetime.now().timestamp()),
-        Block(block_id=3, x=2, y=2, z=3, colorID=1, put=True, time=datetime.now().timestamp()),
-        Block(block_id=4, x=1, y=2, z=4, colorID=1, put=True, time=datetime.now().timestamp()),
-        Block(block_id=5, x=1, y=2, z=2, colorID=1, put=True, time=datetime.now().timestamp())
+        Block(x=1, y=2, z=3, colorID=1, time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=3, z=3, colorID=1, time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=2, y=2, z=3, colorID=1, time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=2, z=4, colorID=1, time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=2, z=2, colorID=1, time=datetime.now().timestamp(), map_id=map.id)
     ]
 
     for block in blocks:
