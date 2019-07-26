@@ -1,4 +1,4 @@
-from flask import Blueprint, make_response, jsonify, request
+from flask import Blueprint, make_response, jsonify, request, abort
 from api.models import Block, Map
 from api._db import db
 
@@ -30,12 +30,16 @@ def return_test_data():
 @api_app.route('/create_map/', methods=["POST"])
 def create_map():
     name = request.form['name']
-    new_map = Map()
-    new_map.name = name
+    new_map = Map(name=name)
     db.session.add(new_map)
     try:
         db.session.commit()
     except:
         db.session.rollback()
-        return "error"
-    return str(new_map.id)
+        return abort(500)
+
+    map_data = {
+        "ID": new_map.id,
+        "name": name
+    }
+    return make_response(jsonify(map_data))
