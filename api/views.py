@@ -6,7 +6,7 @@ from api._db import db
 api_app = Blueprint('api_app', __name__)
 
 
-@api_app.route('/get_blocks/map_id:<uuid:map_id>/')
+@api_app.route('/get_blocks/<uuid:map_id>/')
 def get_blocks(map_id):
     blocks = db.session.query(Block).filter_by(map_id=map_id)
     blocks_data = {
