@@ -1,4 +1,4 @@
-from flask import Blueprint, make_response, jsonify
+from flask import Blueprint, make_response, jsonify, request, abort
 from api.models import Block, Map
 from api._db import db
 
@@ -41,3 +41,24 @@ def get_maps():
         maps_data["maps"].append(tmp_dic)
 
     return make_response(jsonify(maps_data))
+
+
+@api_app.route('/create_map/', methods=["POST"])
+def create_map():
+    if request.content_type == "application/json":
+        name = request.json["name"]  # request.jsonにはcontent_typeがapplication/jsonのときにしかデータが入らない
+        new_map = Map(name=name)
+        db.session.add(new_map)
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return abort(500)
+
+        map_data = {
+            "ID": new_map.id,
+            "name": name
+        }
+        return make_response(jsonify(map_data))
+    else:
+        return abort(406)
