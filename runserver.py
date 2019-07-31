@@ -2,7 +2,6 @@ from api import app, sockets
 import bugsnag
 from settings import BUGSNAG_API_KEY, FLASK_ENV
 import os
-from flask_socketio import SocketIO
 
 
 if __name__ == "__main__":
