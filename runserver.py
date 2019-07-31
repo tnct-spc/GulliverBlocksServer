@@ -1,7 +1,8 @@
-from api import app
+from api import app, sockets
 import bugsnag
 from settings import BUGSNAG_API_KEY, FLASK_ENV
 import os
+from flask_socketio import SocketIO
 
 
 if __name__ == "__main__":
@@ -12,4 +13,10 @@ if __name__ == "__main__":
     )
     port = int(os.environ.get("PORT", 5000))
 
-    app.run(host = '0.0.0.0', port = port, debug=True)
+    """
+    sockets.run(app, host = '0.0.0.0', port = port, debug = True)
+    """
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+    server = pywsgi.WSGIServer(('', 5000), app, handler_class=WebSocketHandler)
+    server.serve_forever()
