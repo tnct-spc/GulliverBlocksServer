@@ -3,12 +3,26 @@ from api.models import Block, Map
 from api._db import db
 from api import sockets
 import gevent
+import redis
+import json
+
+redis = redis.from_url('redis://localhost:6379')
 
 
 api_app = Blueprint('api_app', __name__)
 class SocketClients():
     def __init__(self):
         self.clients = {}
+        self.pubsub = redis.pubsub()
+        self.pubsub.subscribe('received_message')
+
+    def __iter_data(self):
+        for data in self.pubsub.listen():
+            try:
+                json.loads(data.get('data'))
+            except:
+                continue
+            yield json.loads(data.get('data'))
 
     def register(self, client, map_id):
         if map_id in self.clients:
@@ -18,9 +32,19 @@ class SocketClients():
 
     def send(self, client, data, map_id):
         try:
-            client.send(data)
+            client.send(str(data))
         except Exception:
             self.clients[map_id].remove(client)
+
+    def run(self):
+        for data in self.__iter_data():
+            message = data.get('message')
+            map_id = data.get('map_id')
+            if data and map_id:
+                gevent.spawn(self.castForMap, message, map_id)
+
+    def start(self):
+        gevent.spawn(self.run)
 
     def castForMap(self, message, map_id):
         if map_id in self.clients:
@@ -30,9 +54,11 @@ class SocketClients():
     
 socket_clients = SocketClients()
 
+socket_clients.start()
+
 @sockets.route('/receive/<uuid:map_id>/')
 def outbox(ws, map_id):
-    socket_clients.register(ws, map_id)
+    socket_clients.register(ws, str(map_id))
     while not ws.closed:
         gevent.sleep(0.1)
 
@@ -43,7 +69,11 @@ def add_block(map_id):
     TODO: DBへの反映
     現状はwebsocketへの配信しか行っていない
     """
-    socket_clients.castForMap(str(request.json), map_id)
+    data = {
+        'message': request.json,
+        'map_id': str(map_id)
+    }
+    redis.publish('received_message', json.dumps(data)) 
     return make_response('ok')
 
 
