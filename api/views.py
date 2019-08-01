@@ -5,6 +5,7 @@ from api import sockets
 import gevent
 import redis
 import json
+import threading
 
 redis = redis.from_url('redis://localhost:6379')
 
@@ -53,7 +54,6 @@ class SocketClients():
 
     
 socket_clients = SocketClients()
-
 socket_clients.start()
 
 @sockets.route('/receive/<uuid:map_id>/')
