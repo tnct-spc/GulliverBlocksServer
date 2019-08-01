@@ -3,7 +3,6 @@ import bugsnag
 from settings import BUGSNAG_API_KEY, FLASK_ENV
 import os
 
-
 if __name__ == "__main__":
     bugsnag.configure(
         api_key=BUGSNAG_API_KEY,
