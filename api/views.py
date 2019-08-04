@@ -27,7 +27,7 @@ def add_block(realsense_id):
     blockを追加/削除するapi
     """
     if db.session.query(RealSense).filter_by(id=realsense_id).count() <= 0:
-        return make_response('the realsese is not e3xsist'), 400
+        return make_response('the realsense is not exists.'), 400
     map_id = db.session.query(RealSense).filter_by(id=realsense_id).first().current_map_id
 
     # blockのvalidate
