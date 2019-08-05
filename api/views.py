@@ -148,9 +148,9 @@ def create_map():
         return make_response('content type must be application/app'), 406
 
 
-@api_app.route('/get_color_rule/')
-def get_color_rule():
-    color_rules = db.session.query(ColorRule)
+@api_app.route('/get_color_rules/<uuid:map_id>/')
+def get_color_rules(map_id):
+    color_rules = db.session.query(ColorRule).filter_by(map_id=map_id)
     data = {
         "rules": []
     }
