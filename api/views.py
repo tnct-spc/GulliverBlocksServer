@@ -159,13 +159,15 @@ def get_color_rule():
            data["rules"].append({
                 "type": rule.type,
                 "block_id": rule.block_id,
-                "to": rule.to
+                "to": rule.to,
+                "map_id": rule.map_id
            })
         else:
             data["rules"].append({
                 "type": rule.type,
                 "origin": rule.origin,
-                "to": rule.to
+                "to": rule.to,
+                "map_id": rule.map_id
             })
     return make_response(jsonify(data))
 
@@ -173,6 +175,10 @@ def get_color_rule():
 @api_app.route('/create_color_rule/', methods=["POST"])
 def create_color_rule():
     if request.content_type == "application/json":
+        try:
+            request.json["map_id"]
+        except KeyError:
+            return make_response('map_id missing'), 400
         try:
             request.json["type"]
         except KeyError:
@@ -191,7 +197,8 @@ def create_color_rule():
 
             block_id = request.json["block_id"]
             to = request.json["to"]
-            db.session.add(ColorRule(type=type, block_id=block_id, to=to))
+            map_id = request.json["map_id"]
+            db.session.add(ColorRule(type=type, block_id=block_id, to=to, map_id=map_id))
         else:
             try:
                 request.json["origin"]
@@ -200,7 +207,8 @@ def create_color_rule():
 
             origin = request.json["origin"]
             to = request.json["to"]
-            db.session.add(ColorRule(type=type, origin=origin, to=to))
+            map_id = request.json["map_id"]
+            db.session.add(ColorRule(type=type, origin=origin, to=to, map_id=map_id))
 
         try:
             db.session.commit()
