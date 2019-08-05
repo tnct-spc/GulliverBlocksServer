@@ -9,7 +9,7 @@ class Block(db.Model):
     y = db.Column(db.Float, nullable=False)
     z = db.Column(db.Float, nullable=False)
     time = db.Column(db.Float, nullable=False)
-    colorID = db.Column(db.Integer, nullable=False)
+    colorID = db.Column(db.String, nullable=False)
     map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id'), nullable=False)
 
 
