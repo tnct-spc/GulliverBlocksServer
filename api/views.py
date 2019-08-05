@@ -1,5 +1,5 @@
-from flask import Blueprint, make_response, jsonify, request, abort
-from api.models import Block, Map, RealSense, ColorRule
+from flask import Blueprint, make_response, jsonify, request
+from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap
 from api._db import db
 from api._redis import redis_connection
 import json
@@ -218,9 +218,107 @@ def create_color_rule():
         try:
             db.session.commit()
         except:
-            db.session.roleback()
+            db.session.rollback()
             return make_response('integrity error'), 500
 
         return make_response("ok")
     else:
         return make_response('content type must be application/app'), 406
+
+
+@api_app.route('/get_merges/')
+def get_merges():
+    merges = db.session.query(Merge)
+    data = {
+        "merges": []
+    }
+    for merge in merges:
+        data["merges"].append({
+            "ID": merge.id,
+            "name": merge.name
+        })
+    return make_response(jsonify(data))
+
+
+@api_app.route('/create_merge/', methods=["POST"])
+def create_merge():
+    if request.content_type == "application/json":
+        try:
+            request.json["name"]
+        except KeyError:
+            return make_response('name missing'), 400
+
+        db.session.add(Merge(name=request.json["name"]))
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+
+        return make_response('ok')
+    else:
+        return make_response('content type must be application/json'), 406
+
+
+@api_app.route('/get_merge_maps/<uuid:merge_id>/')
+def get_merge_maps(merge_id):
+    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id)
+    data = {
+        "merge_maps": []
+    }
+    for merge_map in merge_maps:
+        data["merge_maps"].append({
+            "map_id": merge_map.map_id,
+            "x": merge_map.x,
+            "y": merge_map.y,
+            "rotate": merge_map.rotate
+        })
+    return make_response(jsonify(data))
+
+
+@api_app.route('/create_merge_map/', methods=["POST"])
+def create_merge_map():
+    if request.content_type == "application/json":
+        try:
+            request.json["merge_maps"]
+        except KeyError:
+            return make_response('merge_map data missing'), 400
+        try:
+            request.json["merge_id"]
+        except KeyError:
+            return make_response('merge_id missing'), 400
+
+        merge_maps = request.json["merge_maps"]
+        for merge_map_data in merge_maps:
+            try:
+                merge_map_data["map_id"]
+            except KeyError:
+                return make_response('map_id missing'), 400
+            try:
+                merge_map_data["x"]
+                merge_map_data["y"]
+            except KeyError:
+                return make_response('x or y missing'), 400
+            try:
+                merge_map_data["rotate"]
+            except KeyError:
+                return make_response('rotate missing'), 400
+
+            merge_map = MergeMap(
+                map_id=merge_map_data["map_id"],
+                merge_id=request.json["merge_id"],
+                x=merge_map_data["x"],
+                y=merge_map_data["y"],
+                rotate=merge_map_data["rotate"]
+            )
+            db.session.add(merge_map)
+
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+
+        return make_response('ok')
+    else:
+        return make_response('content type must be application/json'), 406
