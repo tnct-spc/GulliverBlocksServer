@@ -9,6 +9,10 @@ if __name__ == "__main__":
     db.session.add(map)
     db.session.commit()
 
+    realsense = RealSense(name='test_realsense', current_map_id=map.id)
+    db.session.add(realsense)
+    db.session.commit()
+
     blocks = [
         Block(x=1, y=2, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
         Block(x=1, y=3, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),

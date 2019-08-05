@@ -1,8 +1,7 @@
-from api import app
+from api import app, sockets
 import bugsnag
 from settings import BUGSNAG_API_KEY, FLASK_ENV
 import os
-
 
 if __name__ == "__main__":
     bugsnag.configure(
@@ -11,5 +10,4 @@ if __name__ == "__main__":
         release_stage = FLASK_ENV,
     )
     port = int(os.environ.get("PORT", 5000))
-
     app.run(host = '0.0.0.0', port = port, debug=True)
