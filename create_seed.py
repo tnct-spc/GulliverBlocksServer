@@ -10,11 +10,11 @@ if __name__ == "__main__":
     db.session.commit()
 
     blocks = [
-        Block(x=1, y=2, z=3, colorID="test_colorID", time=datetime.now().timestamp(), map_id=map.id),
-        Block(x=1, y=3, z=3, colorID="test_colorID", time=datetime.now().timestamp(), map_id=map.id),
-        Block(x=2, y=2, z=3, colorID="test_colorID", time=datetime.now().timestamp(), map_id=map.id),
-        Block(x=1, y=2, z=4, colorID="test_colorID", time=datetime.now().timestamp(), map_id=map.id),
-        Block(x=1, y=2, z=2, colorID="test_colorID", time=datetime.now().timestamp(), map_id=map.id)
+        Block(x=1, y=2, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=3, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=2, y=2, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=2, z=4, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=2, z=2, colorID="1", time=datetime.now().timestamp(), map_id=map.id)
     ]
 
     for block in blocks:
