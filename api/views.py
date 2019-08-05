@@ -1,5 +1,5 @@
 from flask import Blueprint, make_response, jsonify, request, abort
-from api.models import Block, Map, RealSense
+from api.models import Block, Map, RealSense, ColorRule
 from api._db import db
 from api._redis import redis_connection
 import json
@@ -145,4 +145,69 @@ def create_map():
         }
         return make_response(jsonify(map_data))
     else:
-        return abort(406)
+        return make_response('content type must be application/app'), 406
+
+
+@api_app.route('/get_color_rule/')
+def get_color_rule():
+    color_rules = db.session.query(ColorRule)
+    data = {
+        "rules": []
+    }
+    for rule in color_rules:
+        if rule.type == "ID":
+           data["rules"].append({
+                "type": rule.type,
+                "block_id": rule.block_id,
+                "to": rule.to
+           })
+        else:
+            data["rules"].append({
+                "type": rule.type,
+                "origin": rule.origin,
+                "to": rule.to
+            })
+    return make_response(jsonify(data))
+
+
+@api_app.route('/create_color_rule/', methods=["POST"])
+def create_color_rule():
+    if request.content_type == "application/json":
+        try:
+            request.json["type"]
+        except KeyError:
+            return make_response('type missing'), 400
+        try:
+            request.json["to"]
+        except KeyError:
+            return make_response('to missing'), 400
+
+        type = request.json["type"]
+        if type == "ID":
+            try:
+                request.json["block_id"]
+            except KeyError:
+                return make_response('block_id missing'), 400
+
+            block_id = request.json["block_id"]
+            to = request.json["to"]
+            db.session.add(ColorRule(type=type, block_id=block_id, to=to))
+        else:
+            try:
+                request.json["origin"]
+            except KeyError:
+                return make_response('origin missing'), 400
+
+            origin = request.json["origin"]
+            to = request.json["to"]
+            db.session.add(ColorRule(type=type, origin=origin, to=to))
+
+        try:
+            db.session.commit()
+        except:
+            db.session.roleback()
+            return make_response('integrity error'), 500
+
+        return make_response("ok")
+    else:
+        return make_response('content type must be application/app'), 406

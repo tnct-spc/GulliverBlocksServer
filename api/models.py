@@ -12,6 +12,8 @@ class Block(db.Model):
     colorID = db.Column(db.String, nullable=False)
     map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id'), nullable=False)
 
+    color_rule = db.relationship('ColorRule', backref='block', lazy=True)
+
 
 class Map(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
@@ -40,3 +42,11 @@ class MergeMap(db.Model):
     x = db.Column(db.Float, nullable=False)
     y = db.Column(db.Float, nullable=False)
     rotate = db.Column(db.Integer, nullable=False)
+
+
+class ColorRule(db.Model):
+    id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
+    type = db.Column(db.String, nullable=False)
+    block_id = db.Column(UUID(as_uuid=True), db.ForeignKey('block.id'), nullable=True)
+    origin = db.Column(db.String, nullable=True)
+    to = db.Column(db.String, nullable=False)

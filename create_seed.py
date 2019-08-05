@@ -27,5 +27,5 @@ if __name__ == "__main__":
     try:
         db.session.commit()
     except:
-        print("error")
+        print('integrity error')
         db.session.rollback()
