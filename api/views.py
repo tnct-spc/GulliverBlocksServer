@@ -6,8 +6,8 @@ import json
 import time
 
 
-
 api_app = Blueprint('api_app', __name__)
+
 
 @api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):
@@ -20,6 +20,7 @@ def add_block_for_debug(map_id):
     }
     redis_connection.publish('received_message', json.dumps(data))
     return make_response('ok')
+
 
 @api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
 def add_block(realsense_id):
@@ -56,11 +57,20 @@ def add_block(realsense_id):
 
     deleted_block_ids = []
     for b in delete_blocks:
-        block_object = db.session.query(Block).filter_by(x = b['x'], y=b['y'], z=b['z']).first()
+        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z']).first()
         deleted_block_ids.append(block_object.id)
         db.session.delete(block_object)
-    put_block_objects = [Block(x=b['x'], y=b['y'], z=b['z'], time=time.time(), colorID=b['colorID'], map_id=map_id) for b in put_blocks]
-    db.session.bulk_save_objects(put_block_objects, return_defaults = True)
+    put_block_objects = [
+        Block(
+            x=b['x'],
+            y=b['y'],
+            z=b['z'],
+            time=time.time(),
+            colorID=b['colorID'],
+            map_id=map_id
+        )for b in put_blocks
+    ]
+    db.session.bulk_save_objects(put_block_objects, return_defaults=True)
 
     try:
         db.session.commit()
@@ -68,8 +78,9 @@ def add_block(realsense_id):
         return make_response('integrity error'), 500
 
     # websocket 配信
-    message = {}
-    message['blocks'] = []
+    message = {
+        'blocks': []
+    }
     message['blocks'].extend([{
         'put': False,
         'ID': str(block_id)
@@ -89,6 +100,7 @@ def add_block(realsense_id):
     }
     redis_connection.publish('received_message', json.dumps(data))
     return make_response('ok')
+
 
 @api_app.route('/get_blocks/<uuid:map_id>/')
 def get_blocks(map_id):
@@ -114,7 +126,7 @@ def get_blocks(map_id):
 @api_app.route('/get_maps/')
 def get_maps():
     maps = db.session.query(Map)
-    maps_data ={
+    maps_data = {
         "maps": []
     }
     for map in maps:
@@ -289,6 +301,7 @@ def create_merge_map():
             return make_response('merge_id missing'), 400
 
         merge_maps = request.json["merge_maps"]
+        merge_map_objects = []
         for merge_map_data in merge_maps:
             try:
                 merge_map_data["map_id"]
@@ -304,15 +317,16 @@ def create_merge_map():
             except KeyError:
                 return make_response('rotate missing'), 400
 
-            merge_map = MergeMap(
-                map_id=merge_map_data["map_id"],
-                merge_id=request.json["merge_id"],
-                x=merge_map_data["x"],
-                y=merge_map_data["y"],
-                rotate=merge_map_data["rotate"]
+            merge_map_objects.append(
+                MergeMap(
+                    map_id=merge_map_data["map_id"],
+                    merge_id=request.json["merge_id"],
+                    x=merge_map_data["x"],
+                    y=merge_map_data["y"],
+                    rotate=merge_map_data["rotate"]
+                )
             )
-            db.session.add(merge_map)
-
+        db.session.bulk_save_objects(merge_map_objects, return_defaults=True)
         try:
             db.session.commit()
         except:
