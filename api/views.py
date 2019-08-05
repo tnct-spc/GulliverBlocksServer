@@ -130,14 +130,19 @@ def get_maps():
 @api_app.route('/create_map/', methods=["POST"])
 def create_map():
     if request.content_type == "application/json":
-        name = request.json["name"]  # request.jsonにはcontent_typeがapplication/jsonのときにしかデータが入らない
+        try:
+            request.json["name"]
+        except KeyError:
+            return make_response('name missing'), 400
+
+        name = request.json["name"]
         new_map = Map(name=name)
         db.session.add(new_map)
         try:
             db.session.commit()
         except:
             db.session.rollback()
-            return abort(500)
+            return make_response('integrity error'), 500
 
         map_data = {
             "ID": new_map.id,
