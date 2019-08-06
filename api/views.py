@@ -4,6 +4,7 @@ from api._db import db
 from api._redis import redis_connection
 import json
 import time
+from math import sin, cos, radians
 
 
 api_app = Blueprint('api_app', __name__)
@@ -336,3 +337,81 @@ def create_merge_map():
         return make_response('ok')
     else:
         return make_response('content type must be application/json'), 406
+
+
+@api_app.route('/get_merged_map/<uuid:merge_id>/')
+def get_merged_map(merge_id):
+    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id)
+    merged_blocks = []
+
+    for merge_map in merge_maps:
+        _map = db.session.query(Map).get(merge_map.map_id)
+        blocks = db.session.query(Block).filter_by(map_id=_map.id)
+        for block in blocks:
+            """
+            ブロックの座標移動処理
+            """
+            rad = radians(90*merge_map.rotate)
+            tmp_x = block.x
+            tmp_y = block.y
+            block.x = round(tmp_x*cos(rad) - tmp_y*sin(rad))
+            block.y = round(tmp_y*cos(rad) + tmp_x*sin(rad))
+
+            block.x += merge_map.x
+            block.y += merge_map.y
+
+            merged_blocks.append(block)
+
+    data = {
+        "blocks": []
+    }
+    for merged_block in merged_blocks:
+        data["blocks"].append({
+            "ID": merged_block.id,
+            "colorID": merged_block.colorID,
+            "time": merged_block.time,
+            "x": merged_block.x,
+            "y": merged_block.y,
+            "z": merged_block.z
+        })
+
+    return make_response(jsonify(data))
+
+
+@api_app.route('/get_realsenses/')
+def get_realsense():
+    realsenses = db.session.query(RealSense)
+    data = {
+        "realsenses": []
+    }
+    for realsense in realsenses:
+        data["realsenses"].append({
+            "ID": realsense.id,
+            "name": realsense.name
+        })
+    return make_response(jsonify(data))
+
+
+@api_app.route('/create_realsense/', methods=["POST"])
+def create_realsense():
+    if request.content_type == "application/json":
+        try:
+            request.json["name"]
+        except KeyError:
+            return make_response('name missing'), 400
+        try:
+            request.json["current_map_id"]
+        except KeyError:
+            return make_response('current_map_id missing'), 400
+
+        realsense = RealSense(name=request.json["name"], current_map_id=request.json["current_map_id"])
+        db.session.add(realsense)
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+
+        return make_response("ok")
+    else:
+        return make_response('content type must be application/app'), 406
