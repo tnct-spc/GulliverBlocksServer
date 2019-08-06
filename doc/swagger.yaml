@@ -184,8 +184,8 @@ paths:
                       example: 2,
                     rotate:
                       type: "integer"
-                      example: "1"
-                      description: "mapのmergするときの回転 1,2,3,4"
+                      example: 1
+                      description: "mapのmergeするときの回転 1,2,3,4"
   /debug_add_blocks/{map_id}/:
     post:
       tags:
@@ -352,7 +352,7 @@ paths:
                     rotate:
                       type: "integer"
                       example: 1
-                      description: "mapのmergするときの回転 1,2,3,4"
+                      description: "mapのmergeするときの回転 1,2,3,4"
       responses:
         200:
           description: "ok"
