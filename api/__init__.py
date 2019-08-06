@@ -9,5 +9,5 @@ from api._db import db
 app.register_blueprint(api_app)
 sockets.register_blueprint(ws)
 
-Migrate(app, db)
+Migrate(app, db, compare_type=True)
 
