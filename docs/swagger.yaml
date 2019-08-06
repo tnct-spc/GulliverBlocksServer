@@ -149,7 +149,7 @@ paths:
                     name:
                       type: "string"
                       example: "test_name"
-  /get_merge_maps/{merge_id}:
+  /get_merge_maps/{merge_id}/:
     get:
       tags:
         - merge
@@ -186,6 +186,48 @@ paths:
                       type: "integer"
                       example: 1
                       description: "mapのmergeするときの回転 1,2,3,4"
+  /get_merged_blocks/{merge_id}/:
+    get:
+      tags:
+        - merge
+      parameters:
+        -
+          name: merge_id
+          in: path
+          description: "mergeデータのid"
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: "mergeデータに含まれるすべてのblockをmerge_mapのrotateやx,yに従い座標を加工して取得"
+          schema:
+            type: "object"
+            properties:
+              blocks:
+                type: "array"
+                items:
+                  type: "object"
+                  description: "ブロックの情報"
+                  properties:
+                    ID:
+                      type: "string"
+                      format: "uuid"
+                    colorID:
+                      type: "string"
+                      example: "1"
+                    time:
+                      type: "integer"
+                      format: "unixtime"
+                    x:
+                      type: "integer"
+                      example: 1,
+                    y:
+                      type: "integer"
+                      example: 2,
+                    z:
+                      type: "integer"
+                      example: 3,
   /debug_add_blocks/{map_id}/:
     post:
       tags:

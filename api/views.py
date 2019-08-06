@@ -339,14 +339,13 @@ def create_merge_map():
         return make_response('content type must be application/json'), 406
 
 
-@api_app.route('/get_merged_map/<uuid:merge_id>/')
-def get_merged_map(merge_id):
-    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id)
+@api_app.route('/get_merged_blocks/<uuid:merge_id>/')
+def get_merged_blocks(merge_id):
+    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id).all()
     merged_blocks = []
 
     for merge_map in merge_maps:
-        _map = db.session.query(Map).get(merge_map.map_id)
-        blocks = db.session.query(Block).filter_by(map_id=_map.id)
+        blocks = db.session.query(Block).filter_by(map_id=merge_map.map_id).all()
         for block in blocks:
             """
             ブロックの座標移動処理
