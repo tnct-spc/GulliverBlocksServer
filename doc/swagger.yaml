@@ -35,9 +35,11 @@ paths:
                     ID:
                       type: "string"
                       format: "uuid"
+                      description: "mapのid"
                     name:
                       type: "string"
                       example: "test_map"
+                      description: "mapの名前"
   /get_blocks/{map_id}/:
     get:
       tags:
@@ -60,10 +62,12 @@ paths:
                 type: "array"
                 items:
                   type: "object" 
+                  description: "ブロックの情報"
                   properties:
                     ID:
                       type: "string"
                       format: "uuid"
+                      description: "blockのid"
                     colorID:
                       type: "string"
                       example: "1"
@@ -109,9 +113,15 @@ paths:
                     type:
                       type: "string"
                       example: "ID"
+                      description: "color ruleのtype [ID] (特定ブロックの色を変更)/[color] (特定色を任意色に変更)"
                     block_id:
                       type: "string"
                       format: "uuid"
+                      description: "変更対象のBlock_id, ruleが[ID]のときのみ必要"
+                    origin:
+                      type: "string"
+                      example: "1"
+                      description: "変更前のcolorID, ruleが[color]のときのみ必要"
                     to:
                       type: "string"
                       example: "1"
@@ -168,15 +178,14 @@ paths:
                     x:
                       type: "integer"
                       example: 1,
+                      description: "x,y 共通, mergeするときmapをどこに配置するか"
                     y:
                       type: "integer"
                       example: 2,
-                    z:
-                      type: "integer"
-                      example: 3,
                     rotate:
                       type: "integer"
                       example: "1"
+                      description: "mapのmergするときの回転 1,2,3,4"
   /debug_add_blocks/{map_id}/:
     post:
       tags:
@@ -207,7 +216,7 @@ paths:
           type: string
           format: uuid
         -
-          name: put_blocks
+          name: blocks
           description: "ブロック追加"
           in: body
           schema:
@@ -221,33 +230,11 @@ paths:
                     put:
                       type: "boolean"
                       example: true
+                      description: "blockの追加(ture)/ 削除(false)"
                     colorID:
                       type: "string"
                       example: "1"
-                    x:
-                      type: "integer"
-                      example: 1
-                    y:
-                      type: "integer"
-                      example: 2
-                    z:
-                      type: "integer"
-                      example: 3
-        -
-          name: delete_blocks
-          description: "ブロック削除"
-          in: body
-          schema:
-            type: "object"
-            properties:
-              blocks:
-                type: "array"
-                items:
-                  type: "object" 
-                  properties:
-                    put:
-                      type: "boolean"
-                      example: false
+                      description: "blockの色, putがtrueのときのみ必要"
                     x:
                       type: "integer"
                       example: 1
@@ -286,8 +273,7 @@ paths:
       summary: "color rule　作成"
       parameters:
         - 
-          name: IDrule
-          description: "type = IDのとき"
+          name: rule
           in: body
           schema:
             type: "object"
@@ -298,31 +284,18 @@ paths:
               type:
                 type: "string"
                 example: "ID"
+                description: "color ruleのtype [ID] (特定ブロックの色を変更)/[color] (特定色を任意色に変更)"
+              origin:
+                type: "string"
+                example: "2"
+                description: "変更前のcolorID, ruleが[color]のときのみ必要"
               to:
                 type: "string"
                 example: "1"
               block_id:
                 type: "string"
                 example: "uuid"
-        -
-          name: colorRule
-          description: "type = colorのとき"
-          in: body
-          schema:
-            type: "object"
-            properties:
-              map_id:
-                type: "string"
-                format: "uuid"
-              type:
-                type: "string"
-                example: "color"
-              to:
-                type: "string"
-                example: "1"
-              origin:
-                type: "string"
-                example: "2"
+                description: "変更対象のBlock_id, ruleが[ID]のときのみ必要"
       responses:
         200:
           description: "ok"
@@ -372,15 +345,14 @@ paths:
                     x:
                       type: "integer"
                       example: 1
+                      description: "x,y 共通, mergeするときmapをどこに配置するか"
                     y:
                       type: "integer"
                       example: 2
-                    z:
-                      type: "integer"
-                      example: 3
                     rotate:
                       type: "integer"
                       example: 1
+                      description: "mapのmergするときの回転 1,2,3,4"
       responses:
         200:
           description: "ok"
@@ -430,6 +402,7 @@ definitions:
         type: "string" 
         format: "uuid(Map)" 
   Merge: 
+    description: "mergeデータ本体 Merge(1) : MergeMap(多)の関係"
     type: "object" 
     properties: 
       id: 
@@ -439,6 +412,7 @@ definitions:
         type: "string" 
         format: "name of Mege D ata"
   MergeMap: 
+    description: "mergeに含まれるmap一覧 Merge(1) : MergeMap(多)の関係"
     type: "object" 
     properties: 
       id: 
