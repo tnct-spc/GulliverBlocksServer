@@ -86,7 +86,7 @@ paths:
           format: uuid
       responses:
         200:
-          description: "map 一覧"
+          description: "color rule 一覧"
           schema:
             type: "object"
             properties:
