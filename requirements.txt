@@ -1,6 +1,5 @@
 alembic==1.0.11
 blinker==1.4
-bugsnag==3.6.0
 Click==7.0
 Flask==1.1.1
 Flask-Migrate==2.5.2
