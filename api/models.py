@@ -5,9 +5,9 @@ from uuid import uuid4
 
 class Block(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
-    x = db.Column(db.Float, nullable=False)
-    y = db.Column(db.Float, nullable=False)
-    z = db.Column(db.Float, nullable=False)
+    x = db.Column(db.Integer, nullable=False)
+    y = db.Column(db.Integer, nullable=False)
+    z = db.Column(db.Integer, nullable=False)
     time = db.Column(db.Float, nullable=False)
     colorID = db.Column(db.String, nullable=False)
     map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id'), nullable=False)
@@ -40,8 +40,8 @@ class MergeMap(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id'), nullable=False)
     merge_id = db.Column(UUID(as_uuid=True), db.ForeignKey('merge.id'), nullable=False)
-    x = db.Column(db.Float, nullable=False)
-    y = db.Column(db.Float, nullable=False)
+    x = db.Column(db.Integer, nullable=False)
+    y = db.Column(db.Integer, nullable=False)
     rotate = db.Column(db.Integer, nullable=False)
 
 
