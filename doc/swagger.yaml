@@ -1,0 +1,436 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Gulliver Blocks Server"
+host: "gulliverblocks.herokuapp.com"
+basePath: "/"
+schemes:
+- "https"
+- "http"
+tags:
+ - name: map
+ - name: block
+ - name: merge
+ - name: colorRule
+paths:
+  /get_maps/:
+    get:
+      tags:
+        - map
+      summary: "map一覧を取得"
+      description: ""
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "map 一覧"
+          schema:
+            type: "object"
+            properties:
+              maps:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    ID:
+                      type: "string"
+                      format: "uuid"
+                      description: "mapのid"
+                    name:
+                      type: "string"
+                      example: "test_map"
+                      description: "mapの名前"
+  /get_blocks/{map_id}/:
+    get:
+      tags:
+        - block
+      parameters:
+        -
+          name: map_id
+          in: path
+          description: "mapのid"
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: "ok"
+          schema:
+            type: "object"
+            properties:
+              blocks:
+                type: "array"
+                items:
+                  type: "object" 
+                  description: "ブロックの情報"
+                  properties:
+                    ID:
+                      type: "string"
+                      format: "uuid"
+                      description: "blockのid"
+                    colorID:
+                      type: "string"
+                      example: "1"
+                    time:
+                      type: "integer"
+                      format: "unixtime"
+                    x:
+                      type: "integer"
+                      example: 1
+                    y:
+                      type: "integer"
+                      example: 2
+                    z:
+                      type: "integer"
+                      example: 3
+  /get_color_rule/{map_id}/:
+    get:
+      tags:
+        - colorRule
+      summary: "color ruleの取得"
+      description: ""
+      produces:
+      - "application/json"
+      parameters:
+        -
+          name: map_id
+          in: path
+          description: "mapのid"
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: "color rule 一覧"
+          schema:
+            type: "object"
+            properties:
+              rules:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    type:
+                      type: "string"
+                      example: "ID"
+                      description: "color ruleのtype [ID] (特定ブロックの色を変更)/[color] (特定色を任意色に変更)"
+                    block_id:
+                      type: "string"
+                      format: "uuid"
+                      description: "変更対象のBlock_id, ruleが[ID]のときのみ必要"
+                    origin:
+                      type: "string"
+                      example: "1"
+                      description: "変更前のcolorID, ruleが[color]のときのみ必要"
+                    to:
+                      type: "string"
+                      example: "1"
+                    map_id:
+                      type: "string"
+                      format: "uuid"
+  /get_merges/:
+    get:
+      tags:
+        - merge
+      responses:
+        200:
+          description: すべてのMergeデータ
+          schema:
+            type: "object"
+            properties:
+              merges:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    ID:
+                      type: "string"
+                      format: "uuid"
+                    name:
+                      type: "string"
+                      example: "test_name"
+  /get_merge_maps/{merge_id}:
+    get:
+      tags:
+        - merge
+      parameters:
+        -
+          name: merge_id
+          in: path
+          description: "mergeデータのid"
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: "mergeデータに含まれるすべてのmapを取得"
+          schema:
+            type: "object"
+            properties:
+              merge_maps:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    map_id:
+                      type: "string"
+                      format: "uuid"
+                    x:
+                      type: "integer"
+                      example: 1,
+                      description: "x,y 共通, mergeするときmapをどこに配置するか"
+                    y:
+                      type: "integer"
+                      example: 2,
+                    rotate:
+                      type: "integer"
+                      example: 1
+                      description: "mapのmergeするときの回転 1,2,3,4"
+  /debug_add_blocks/{map_id}/:
+    post:
+      tags:
+        - block
+      summary: "デバッグ用websocket配信"
+      parameters:
+        -
+          name: map_id
+          in: path
+          description: "mapのid"
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: "送られてきたjsonをそのままmap_idのmapにwebsocketで配信します"
+  /add_blocks/{realsense_id}/:
+    post:
+      tags:
+        - block
+      summary: "ブロックの追加/削除"
+      parameters:
+        -
+          name: realsense_id
+          in: path
+          description: "realsenseのid"
+          required: true
+          type: string
+          format: uuid
+        -
+          name: blocks
+          description: "ブロック追加"
+          in: body
+          schema:
+            type: "object"
+            properties:
+              blocks:
+                type: "array"
+                items:
+                  type: "object" 
+                  properties:
+                    put:
+                      type: "boolean"
+                      example: true
+                      description: "blockの追加(ture)/ 削除(false)"
+                    colorID:
+                      type: "string"
+                      example: "1"
+                      description: "blockの色, putがtrueのときのみ必要"
+                    x:
+                      type: "integer"
+                      example: 1
+                    y:
+                      type: "integer"
+                      example: 2
+                    z:
+                      type: "integer"
+                      example: 3
+      responses:
+        200:
+          description: "ok"
+  /create_map/:
+    post:
+      tags:
+        - map
+      summary: "map作成API"
+      parameters:
+        -
+          name: map_info
+          in: body
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                example: "test_map"
+      responses:
+        200:
+          description: "ok"
+  /create_color_rule/:
+    post:
+      tags:
+        - colorRule
+      summary: "color rule　作成"
+      parameters:
+        - 
+          name: rule
+          in: body
+          schema:
+            type: "object"
+            properties:
+              map_id:
+                type: "string"
+                format: "uuid"
+              type:
+                type: "string"
+                example: "ID"
+                description: "color ruleのtype [ID] (特定ブロックの色を変更)/[color] (特定色を任意色に変更)"
+              origin:
+                type: "string"
+                example: "2"
+                description: "変更前のcolorID, ruleが[color]のときのみ必要"
+              to:
+                type: "string"
+                example: "1"
+              block_id:
+                type: "string"
+                example: "uuid"
+                description: "変更対象のBlock_id, ruleが[ID]のときのみ必要"
+      responses:
+        200:
+          description: "ok"
+  /create_merge/:
+    post:
+      tags:
+        - merge
+      summary: "Merge作成API"
+      parameters:
+        -
+          name: merge_info
+          in: body
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                example: "test_merge"
+      responses:
+        200:
+          description: "ok"
+
+  /create_merge_maps/:
+    post:
+      tags:
+        - merge
+      summary: "merge_maps作成"
+      parameters:
+        -
+          name: info
+          in: body
+          schema:
+            type: "object"
+            properties:
+              merge_id:
+                type: "string"
+                format: "uuid"
+              merge_maps:
+                type: "array"
+                items:
+                  type: object
+                  properties:
+                    map_id:
+                      type: "string"
+                      format: "uuid"
+                    x:
+                      type: "integer"
+                      example: 1
+                      description: "x,y 共通, mergeするときmapをどこに配置するか"
+                    y:
+                      type: "integer"
+                      example: 2
+                    rotate:
+                      type: "integer"
+                      example: 1
+                      description: "mapのmergeするときの回転 1,2,3,4"
+      responses:
+        200:
+          description: "ok"
+definitions:
+  Block:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+        format: "uuid"
+      x:
+        type: "integer"
+        format: "int64"
+      y:
+        type: "integer"
+        format: "int64"
+      z:
+        type: "integer"
+        format: "int64"
+      time:
+        type: "integer"
+        format: "unix time"
+      colorID:
+        type: "string"
+      map_id:
+        type: "string"
+        format: "uuid (Map)"
+  Map:
+    type: "object" 
+    properties: 
+      id: 
+        type: "string" 
+        format: "uuid" 
+      name: 
+        type: "string" 
+        format: "name of map" 
+  Realsense: 
+    type: "object" 
+    properties: 
+      id: 
+        type: "string" 
+        format: "uuid" 
+      name: 
+        type: "string" 
+        format: "name of realse nse"
+      current_map: 
+        type: "string" 
+        format: "uuid(Map)" 
+  Merge: 
+    description: "mergeデータ本体 Merge(1) : MergeMap(多)の関係"
+    type: "object" 
+    properties: 
+      id: 
+        type: "string" 
+        format: "uuid" 
+      name: 
+        type: "string" 
+        format: "name of Mege D ata"
+  MergeMap: 
+    description: "mergeに含まれるmap一覧 Merge(1) : MergeMap(多)の関係"
+    type: "object" 
+    properties: 
+      id: 
+        type: "string" 
+        format: "uuid" 
+      map_id: 
+        type: "string" 
+        format: "uuid(Map)" 
+      merge_id: 
+        type: "string" 
+        format: "uuid(Merge)" 
+      x: 
+        type: "integer" 
+        format: "diff" 
+      y: 
+        type: "integer" 
+        format: "diff" 
+      rotate: 
+        type: "integer" 
+        format: "1, 2, 3, 4" 
+   
