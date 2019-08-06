@@ -7,9 +7,16 @@ basePath: "/"
 schemes:
 - "https"
 - "http"
+tags:
+ - name: map
+ - name: block
+ - name: merge
+ - name: colorRule
 paths:
   /get_maps/:
     get:
+      tags:
+        - map
       summary: "map一覧を取得"
       description: ""
       produces:
@@ -33,6 +40,8 @@ paths:
                       example: "test_map"
   /get_blocks/{map_id}/:
     get:
+      tags:
+        - block
       parameters:
         -
           name: map_id
@@ -72,6 +81,8 @@ paths:
                       example: 3
   /get_color_rule/{map_id}/:
     get:
+      tags:
+        - colorRule
       summary: "color ruleの取得"
       description: ""
       produces:
@@ -109,6 +120,8 @@ paths:
                       format: "uuid"
   /get_merges/:
     get:
+      tags:
+        - merge
       responses:
         200:
           description: すべてのMergeデータ
@@ -128,6 +141,8 @@ paths:
                       example: "test_name"
   /get_merge_maps/{merge_id}:
     get:
+      tags:
+        - merge
       parameters:
         -
           name: merge_id
@@ -164,6 +179,8 @@ paths:
                       example: "1"
   /debug_add_blocks/{map_id}/:
     post:
+      tags:
+        - block
       summary: "デバッグ用websocket配信"
       parameters:
         -
@@ -178,6 +195,8 @@ paths:
           description: "送られてきたjsonをそのままmap_idのmapにwebsocketで配信します"
   /add_blocks/{realsense_id}/:
     post:
+      tags:
+        - block
       summary: "ブロックの追加/削除"
       parameters:
         -
@@ -243,6 +262,8 @@ paths:
           description: "ok"
   /create_map/:
     post:
+      tags:
+        - map
       summary: "map作成API"
       parameters:
         -
@@ -260,6 +281,8 @@ paths:
           description: "ok"
   /create_color_rule/:
     post:
+      tags:
+        - colorRule
       summary: "color rule　作成"
       parameters:
         - 
@@ -305,6 +328,8 @@ paths:
           description: "ok"
   /create_merge/:
     post:
+      tags:
+        - merge
       summary: "Merge作成API"
       parameters:
         -
@@ -323,6 +348,8 @@ paths:
 
   /create_merge_maps/:
     post:
+      tags:
+        - merge
       summary: "merge_maps作成"
       parameters:
         -
