@@ -107,6 +107,61 @@ paths:
                     map_id:
                       type: "string"
                       format: "uuid"
+  /get_merges/:
+    get:
+      responses:
+        200:
+          description: すべてのMergeデータ
+          schema:
+            type: "object"
+            properties:
+              merges:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    ID:
+                      type: "string"
+                      format: "uuid"
+                    name:
+                      type: "string"
+                      example: "test_name"
+  /get_merge_maps/{merge_id}:
+    get:
+      parameters:
+        -
+          name: merge_id
+          in: path
+          description: "mergeデータのid"
+          required: true
+          type: string
+          format: uuid
+      responses:
+        200:
+          description: "mergeデータに含まれるすべてのmapを取得"
+          schema:
+            type: "object"
+            properties:
+              merge_maps:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    map_id:
+                      type: "string"
+                      format: "uuid"
+                    x:
+                      type: "integer"
+                      example: 1,
+                    y:
+                      type: "integer"
+                      example: 2,
+                    z:
+                      type: "integer"
+                      example: 3,
+                    rotate:
+                      type: "integer"
+                      example: "1"
   /debug_add_blocks/{map_id}/:
     post:
       summary: "デバッグ用websocket配信"
@@ -245,6 +300,60 @@ paths:
               origin:
                 type: "string"
                 example: "2"
+      responses:
+        200:
+          description: "ok"
+  /create_merge/:
+    post:
+      summary: "Merge作成API"
+      parameters:
+        -
+          name: merge_info
+          in: body
+          required: true
+          schema:
+            type: "object"
+            properties:
+              name:
+                type: "string"
+                example: "test_merge"
+      responses:
+        200:
+          description: "ok"
+
+  /create_merge_maps/:
+    post:
+      summary: "merge_maps作成"
+      parameters:
+        -
+          name: info
+          in: body
+          schema:
+            type: "object"
+            properties:
+              merge_id:
+                type: "string"
+                format: "uuid"
+              merge_maps:
+                type: "array"
+                items:
+                  type: object
+                  properties:
+                    map_id:
+                      type: "string"
+                      format: "uuid"
+                    x:
+                      type: "integer"
+                      example: 1
+                    y:
+                      type: "integer"
+                      example: 2
+                    z:
+                      type: "integer"
+                      example: 3
+                    rotate:
+                      type: "integer"
+                      example: 1
       responses:
         200:
           description: "ok"
