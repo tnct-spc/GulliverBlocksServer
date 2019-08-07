@@ -47,6 +47,7 @@ def add_block(realsense_id):
             block['z']
         except KeyError:
             return make_response('put, x, y or z missing'), 400
+
         if is_put:
             try:
                 block['colorID']
@@ -100,7 +101,45 @@ def add_block(realsense_id):
         'map_id': str(map_id)
     }
     redis_connection.publish('received_message', json.dumps(data))
-    return make_response('ok')
+
+    # mergeに含まれるブロックが変更されていたらそのデータを配信する
+    if db.session.query(MergeMap).filter_by(map_id=map_id).count() > 0:
+        merged_blocks_change_streaming(message=message, map_id=map_id)
+
+    return make_response("ok")
+
+
+def merged_blocks_change_streaming(message, map_id):
+    changed_merges = {}
+    aaa = []
+    for changed_block in message["blocks"]:
+        merge_maps = db.session.query(MergeMap).filter_by(map_id=map_id)
+        for merge_map in merge_maps:
+            """
+                ブロックの座標移動処理
+            """
+            rad = radians(90 * merge_map.rotate)
+            tmp_x = changed_block["x"]
+            tmp_y = changed_block["y"]
+            changed_block["x"] = round(tmp_x*cos(rad) - tmp_y*sin(rad))
+            changed_block["y"] = round(tmp_y*cos(rad) + tmp_x*sin(rad))
+            changed_block["x"] += merge_map.x
+            changed_block["y"] += merge_map.y
+
+            merge = db.session.query(Merge).filter_by(id=merge_map.merge_id).first()
+            if merge.id in changed_merges:
+                changed_merges[merge.id].append(changed_block)
+            else:
+                changed_merges[merge.id] = [changed_block]
+
+    for merge_id, blocks in changed_merges.items():
+        data = {
+            'map_id': str(merge_id),
+            'message': {'blocks': blocks}
+        }
+        redis_connection.publish('received_message', json.dumps(data))
+
+    return
 
 
 @api_app.route('/get_blocks/<uuid:map_id>/')

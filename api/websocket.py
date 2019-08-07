@@ -5,8 +5,9 @@ import redis
 import json
 
 
-
 ws = Blueprint('websocket_app', __name__)
+
+
 class SocketClients():
     def __init__(self):
         self.clients = {}
@@ -51,6 +52,7 @@ class SocketClients():
     
 socket_clients = SocketClients()
 socket_clients.start()
+
 
 @ws.route('/receive/<uuid:map_id>/')
 def outbox(ws, map_id):
