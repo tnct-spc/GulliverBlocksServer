@@ -5,6 +5,7 @@ from api._redis import redis_connection
 import json
 import time
 from math import sin, cos, radians
+import copy
 
 
 api_app = Blueprint('api_app', __name__)
@@ -111,13 +112,14 @@ def add_block(realsense_id):
 
 def merged_blocks_change_streaming(message, map_id):
     changed_merges = {}
-    aaa = []
-    for changed_block in message["blocks"]:
-        merge_maps = db.session.query(MergeMap).filter_by(map_id=map_id)
-        for merge_map in merge_maps:
+    merge_maps = db.session.query(MergeMap).filter_by(map_id=map_id).all()
+    for merge_map in merge_maps:
+        merge = db.session.query(Merge).filter_by(id=merge_map.merge_id).first()
+        for block in message["blocks"]:
             """
                 ブロックの座標移動処理
             """
+            changed_block = copy.deepcopy(block)
             rad = radians(90 * merge_map.rotate)
             tmp_x = changed_block["x"]
             tmp_y = changed_block["y"]
@@ -126,8 +128,7 @@ def merged_blocks_change_streaming(message, map_id):
             changed_block["x"] += merge_map.x
             changed_block["y"] += merge_map.y
 
-            merge = db.session.query(Merge).filter_by(id=merge_map.merge_id).first()
-            if merge.id in changed_merges:
+            if merge.id in changed_merges.keys():
                 changed_merges[merge.id].append(changed_block)
             else:
                 changed_merges[merge.id] = [changed_block]
