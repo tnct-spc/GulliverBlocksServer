@@ -135,7 +135,7 @@ def merged_blocks_change_streaming(message, map_id):
 
     for merge_id, blocks in changed_merges.items():
         data = {
-            'map_id': str(merge_id),  # TODO: merge_idをmap_idとして扱っていて良くないのでmerge_idでwebsocket接続できるようにする
+            'merge_id': str(merge_id),
             'message': {'blocks': blocks}
         }
         redis_connection.publish('received_message', json.dumps(data))
