@@ -1,5 +1,12 @@
-deployment:
-  production:
-    branch: develop
-    commands:
-    - ./bin/deploy.sh
+version: 2
+jobs:
+  deployment:
+    production:
+      branch: develop
+      commands:
+      - ./bin/deploy.sh
+workflows:
+  version: 2
+  deploy:
+    jobs:
+      - deployment
