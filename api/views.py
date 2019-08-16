@@ -1,6 +1,6 @@
 from flask import Blueprint, make_response, jsonify, request
 from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap
-from api._db import db
+from api._app import db
 from api._redis import redis_connection
 import json
 import time
