@@ -5,6 +5,7 @@ from api._redis import redis_connection
 import json
 import time
 from math import sin, cos, radians
+import copy
 
 
 api_app = Blueprint('api_app', __name__)
@@ -47,6 +48,7 @@ def add_block(realsense_id):
             block['z']
         except KeyError:
             return make_response('put, x, y or z missing'), 400
+
         if is_put:
             try:
                 block['colorID']
@@ -100,7 +102,45 @@ def add_block(realsense_id):
         'map_id': str(map_id)
     }
     redis_connection.publish('received_message', json.dumps(data))
-    return make_response('ok')
+
+    # mergeに含まれるブロックが変更されていたらそのデータを配信する
+    if db.session.query(MergeMap).filter_by(map_id=map_id).count() > 0:
+        merged_blocks_change_streaming(message=message, map_id=map_id)
+
+    return make_response("ok")
+
+
+def merged_blocks_change_streaming(message, map_id):
+    changed_merges = {}
+    merge_maps = db.session.query(MergeMap).filter_by(map_id=map_id).all()
+    for merge_map in merge_maps:
+        merge = db.session.query(Merge).filter_by(id=merge_map.merge_id).first()
+        for _changed_block in message["blocks"]:
+            """
+                ブロックの座標移動処理
+            """
+            changed_block = copy.deepcopy(_changed_block)
+            rad = radians(90 * merge_map.rotate)
+            tmp_x = changed_block["x"]
+            tmp_y = changed_block["y"]
+            changed_block["x"] = round(tmp_x*cos(rad) - tmp_y*sin(rad))
+            changed_block["y"] = round(tmp_y*cos(rad) + tmp_x*sin(rad))
+            changed_block["x"] += merge_map.x
+            changed_block["y"] += merge_map.y
+
+            if merge.id in changed_merges.keys():
+                changed_merges[merge.id].append(changed_block)
+            else:
+                changed_merges[merge.id] = [changed_block]
+
+    for merge_id, blocks in changed_merges.items():
+        data = {
+            'merge_id': str(merge_id),
+            'message': {'blocks': blocks}
+        }
+        redis_connection.publish('received_message', json.dumps(data))
+
+    return
 
 
 @api_app.route('/get_blocks/<uuid:map_id>/')
@@ -346,10 +386,11 @@ def get_merged_blocks(merge_id):
 
     for merge_map in merge_maps:
         blocks = db.session.query(Block).filter_by(map_id=merge_map.map_id).all()
-        for block in blocks:
+        for _block in blocks:
             """
             ブロックの座標移動処理
             """
+            block = copy.deepcopy(_block)
             rad = radians(90*merge_map.rotate)
             tmp_x = block.x
             tmp_y = block.y

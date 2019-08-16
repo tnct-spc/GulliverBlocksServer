@@ -5,8 +5,9 @@ import redis
 import json
 
 
-
 ws = Blueprint('websocket_app', __name__)
+
+
 class SocketClients():
     def __init__(self):
         self.clients = {}
@@ -21,24 +22,27 @@ class SocketClients():
                 continue
             yield json.loads(data.get('data'))
 
-    def register(self, client, map_id):
-        if map_id in self.clients:
-            self.clients[map_id].append(client)
+    def register(self, client, uuid):
+        if uuid in self.clients:
+            self.clients[uuid].append(client)
         else:
-            self.clients[map_id] = [client]
+            self.clients[uuid] = [client]
 
-    def send(self, client, data, map_id):
+    def send(self, client, data, uuid):
         try:
             client.send(str(data))
         except Exception:
-            self.clients[map_id].remove(client)
+            self.clients[uuid].remove(client)
 
     def run(self):
         for data in self.__iter_data():
             message = data.get('message')
             map_id = data.get('map_id')
+            merge_id = data.get('merge_id')
             if data and map_id:
                 gevent.spawn(self.castForMap, message, map_id)
+            elif data and merge_id:
+                gevent.spawn(self.castForMerge, message, merge_id)
 
     def start(self):
         gevent.spawn(self.run)
@@ -48,12 +52,18 @@ class SocketClients():
             for client in self.clients[map_id]:
                 gevent.spawn(self.send, client, message, map_id)
 
+    def castForMerge(self, message, merge_id):
+        if merge_id in self.clients:
+            for client in self.clients[merge_id]:
+                gevent.spawn(self.send, client, message, merge_id)
+
     
 socket_clients = SocketClients()
 socket_clients.start()
 
-@ws.route('/receive/<uuid:map_id>/')
-def outbox(ws, map_id):
-    socket_clients.register(ws, str(map_id))
+
+@ws.route('/receive/<uuid:uuid>/')
+def outbox(ws, uuid):
+    socket_clients.register(ws, str(uuid))
     while not ws.closed:
         gevent.sleep(0.1)
