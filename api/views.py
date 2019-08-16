@@ -301,14 +301,15 @@ def create_merge():
         except KeyError:
             return make_response('name missing'), 400
 
-        db.session.add(Merge(name=request.json["name"]))
+        new_merge = Merge(name=request.json["name"])
+        db.session.add(new_merge)
         try:
             db.session.commit()
         except:
             db.session.rollback()
             return make_response('integrity error'), 500
 
-        return make_response('ok')
+        return make_response(jsonify({"message": "ok", "merge_id": str(new_merge.id)}))
     else:
         return make_response('content type must be application/json'), 406
 

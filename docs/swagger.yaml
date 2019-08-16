@@ -359,7 +359,16 @@ paths:
                 example: "test_merge"
       responses:
         200:
-          description: "ok"
+          description: "作成されたmergeのid"
+          schema:
+            type: "object"
+            properties:
+              merge_id:
+                type: "string"
+                format: "uuid"
+              message:
+                type: "string"
+                example: "ok"
 
   /create_merge_maps/:
     post:
