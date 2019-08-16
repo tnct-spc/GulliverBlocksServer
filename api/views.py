@@ -416,3 +416,75 @@ def get_merged_blocks(merge_id):
         })
 
     return make_response(jsonify(data))
+
+
+def recognize_pattern(patterns, blocks):
+    """
+    patterns sample
+    {
+        "road": [
+            {
+                左上のブロックの座標を原点とする
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "colorID": "white"
+            },
+            {
+                原点からの相対座標
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "colorID": "black"
+            },
+            {
+                "x": 2,
+                "y": 0,
+                "z": 0,
+                "colorID": "black"
+            },
+            {
+                "x": 3,
+                "y": 0,
+                "z": 0,
+                "colorID": "white"
+            }
+    }
+    """
+    for pattern_blocks in patterns.values():
+        pattern_blocks.sort(key=lambda b: b.x**2 + b.y**2 + b.z**2)
+
+    use_color = []
+    for pattern_blocks in patterns.values():
+        for pattern_block in pattern_blocks:
+            if pattern_block.colorID not in use_color:
+                use_color.append(pattern_block.colorID)
+
+    target_blocks = [block for block in blocks if block.colorID in use_color]
+    target_blocks.sort(key=lambda b: b.x**2 + b.y**2 + b.z**2)
+
+    found_objects = []
+    for pattern_name, pattern_blocks in patterns.items():
+        for block in target_blocks:
+            for pattern_block in pattern_blocks:
+                if block.colorID == pattern_block.get("colorID"):
+
+
+    """
+    found_objects sample
+    {
+        "road": [
+            [
+                {block},
+                {block},
+                {block}
+            ],
+            [
+                {block},
+                {block},
+                {block}
+            ]
+        ]
+    }
+    """
+    return found_objects
