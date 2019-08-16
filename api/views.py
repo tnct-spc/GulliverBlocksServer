@@ -115,11 +115,11 @@ def merged_blocks_change_streaming(message, map_id):
     merge_maps = db.session.query(MergeMap).filter_by(map_id=map_id).all()
     for merge_map in merge_maps:
         merge = db.session.query(Merge).filter_by(id=merge_map.merge_id).first()
-        for block in message["blocks"]:
+        for _changed_block in message["blocks"]:
             """
                 ブロックの座標移動処理
             """
-            changed_block = copy.deepcopy(block)
+            changed_block = copy.deepcopy(_changed_block)
             rad = radians(90 * merge_map.rotate)
             tmp_x = changed_block["x"]
             tmp_y = changed_block["y"]
@@ -386,10 +386,11 @@ def get_merged_blocks(merge_id):
 
     for merge_map in merge_maps:
         blocks = db.session.query(Block).filter_by(map_id=merge_map.map_id).all()
-        for block in blocks:
+        for _block in blocks:
             """
             ブロックの座標移動処理
             """
+            block = copy.deepcopy(_block)
             rad = radians(90*merge_map.rotate)
             tmp_x = block.x
             tmp_y = block.y
