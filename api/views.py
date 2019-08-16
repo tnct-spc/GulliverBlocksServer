@@ -418,6 +418,59 @@ def get_merged_blocks(merge_id):
     return make_response(jsonify(data))
 
 
+@api_app.route("/test/")
+def test():
+    patterns = {
+        "road": [
+            {
+                "x": 0,
+                "y": 0,
+                "z": 0,
+                "colorID": "white"
+            },
+            {
+                "x": 1,
+                "y": 0,
+                "z": 0,
+                "colorID": "black"
+            },
+            {
+                "x": 2,
+                "y": 0,
+                "z": 0,
+                "colorID": "black"
+            },
+            {
+                "x": 3,
+                "y": 0,
+                "z": 0,
+                "colorID": "white"
+            }
+        ]
+    }
+    blocks = [
+        Block(x=3, y=3, z=3, colorID="white", time=time.time()),
+        Block(x=3, y=3, z=4, colorID="white", time=time.time()),
+        Block(x=5, y=4, z=3, colorID="white", time=time.time()),
+        Block(x=4, y=3, z=3, colorID="black", time=time.time()),
+        Block(x=5, y=3, z=3, colorID="black", time=time.time()),
+        Block(x=6, y=3, z=3, colorID="white", time=time.time())
+    ]
+    result = recognize_pattern(patterns, blocks)
+    data = {}
+    for pattern_name, _blocks in result.items():
+        data[pattern_name] = []
+        for blocks in _blocks:
+            for block in blocks:
+                data[pattern_name].append({
+                    "x": block.x,
+                    "y": block.y,
+                    "z": block.z,
+                    "colorID": block.colorID
+                })
+    return make_response(jsonify(data))
+
+
 def recognize_pattern(patterns, blocks):
     """
     patterns sample
@@ -449,26 +502,23 @@ def recognize_pattern(patterns, blocks):
                 "z": 0,
                 "colorID": "white"
             }
+        ]
     }
     """
+
+    # 優先度 x, y, z
+    # 左上からx軸, y軸, z軸の順に探索していく
     for pattern_blocks in patterns.values():
-        pattern_blocks.sort(key=lambda b: b.x**2 + b.y**2 + b.z**2)
+        pattern_blocks.sort(key=lambda b: (b["z"], b["y"], b["x"]))
 
     use_color = []
     for pattern_blocks in patterns.values():
         for pattern_block in pattern_blocks:
-            if pattern_block.colorID not in use_color:
-                use_color.append(pattern_block.colorID)
+            if pattern_block.get("colorID") not in use_color:
+                use_color.append(pattern_block.get("colorID"))
 
     target_blocks = [block for block in blocks if block.colorID in use_color]
-    target_blocks.sort(key=lambda b: b.x**2 + b.y**2 + b.z**2)
-
-    found_objects = []
-    for pattern_name, pattern_blocks in patterns.items():
-        for block in target_blocks:
-            for pattern_block in pattern_blocks:
-                if block.colorID == pattern_block.get("colorID"):
-
+    target_blocks.sort(key=lambda b: (b.z, b.y, b.x))
 
     """
     found_objects sample
@@ -487,4 +537,27 @@ def recognize_pattern(patterns, blocks):
         ]
     }
     """
+    found_objects = {}
+    for pattern_name, pattern_blocks in patterns.items():
+        for b_index in range(len(target_blocks)):
+            tmp_block_keeper = []
+            for ((p_index, pattern_block), block) in zip(enumerate(pattern_blocks), target_blocks[b_index:]):
+                if p_index == 0:
+                    if not block.colorID == pattern_block.get("colorID"):
+                        break
+                elif not block.colorID == pattern_block.get("colorID"):
+                    is_x_same = pattern_block.get("x") - pattern_blocks[p_index-1].get("x") == block.x - last_block.x
+                    is_y_same = pattern_block.get("y") - pattern_blocks[p_index-1].get("y") == block.y - last_block.y
+                    is_z_same = pattern_block.get("z") - pattern_blocks[p_index-1].get("z") == block.z - last_block.z
+                    if not (is_x_same and is_y_same and is_z_same):
+                        break
+
+                last_block = block
+                tmp_block_keeper.append(block)
+                if p_index == len(pattern_blocks)-1:
+                    if pattern_name in found_objects.keys():
+                        found_objects[pattern_name].append(tmp_block_keeper)
+                    else:
+                        found_objects[pattern_name] = [tmp_block_keeper]
+
     return found_objects
