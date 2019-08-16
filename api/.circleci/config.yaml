@@ -1,5 +1,5 @@
 deployment:
   production:
-    branch: develop
+    branch: feature/165/CD_documents
     commands:
     - ./bin/deploy.sh
