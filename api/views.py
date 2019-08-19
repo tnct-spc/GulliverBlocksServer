@@ -455,19 +455,19 @@ def test():
         }
     }
     blocks = [
+        Block(x=3, y=3, z=3, colorID="white", time=time.time()),
+        Block(x=3, y=3, z=4, colorID="white", time=time.time()),
+        Block(x=5, y=6, z=3, colorID="white", time=time.time()),
+        Block(x=4, y=3, z=3, colorID="black", time=time.time()),
+        Block(x=5, y=3, z=3, colorID="black", time=time.time()),
+        Block(x=6, y=3, z=3, colorID="white", time=time.time()),
+
         Block(x=3, y=4, z=3, colorID="white", time=time.time()),
         Block(x=3, y=4, z=4, colorID="white", time=time.time()),
         Block(x=5, y=5, z=3, colorID="white", time=time.time()),
         Block(x=4, y=4, z=3, colorID="black", time=time.time()),
         Block(x=5, y=4, z=3, colorID="black", time=time.time()),
         Block(x=6, y=4, z=3, colorID="white", time=time.time()),
-
-        Block(x=3, y=3, z=3, colorID="white", time=time.time()),
-        Block(x=3, y=3, z=4, colorID="white", time=time.time()),
-        Block(x=5, y=4, z=3, colorID="white", time=time.time()),
-        Block(x=4, y=3, z=3, colorID="black", time=time.time()),
-        Block(x=5, y=3, z=3, colorID="black", time=time.time()),
-        Block(x=6, y=3, z=3, colorID="white", time=time.time()),
 
         Block(x=3, y=3, z=4, colorID="white", time=time.time()),
         Block(x=3, y=3, z=5, colorID="white", time=time.time()),
@@ -507,7 +507,7 @@ def recognize_pattern(patterns, blocks):
         "road": {
             "blocks": [
                 {
-                    左上のブロックの座標を原点とする
+                    左下のブロックの座標を原点とする
                     "x": 0,
                     "y": 0,
                     "z": 0,
