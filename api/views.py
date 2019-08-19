@@ -421,53 +421,82 @@ def get_merged_blocks(merge_id):
 @api_app.route("/test/")
 def test():
     patterns = {
-        "road": [
-            {
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "colorID": "white"
-            },
-            {
-                "x": 1,
-                "y": 0,
-                "z": 0,
-                "colorID": "black"
-            },
-            {
-                "x": 2,
-                "y": 0,
-                "z": 0,
-                "colorID": "black"
-            },
-            {
-                "x": 3,
-                "y": 0,
-                "z": 0,
-                "colorID": "white"
-            }
-        ]
+        "road": {
+            "blocks": [
+                {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "white"
+                },
+                {
+                    "x": 1,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "black"
+                },
+                {
+                    "x": 2,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "black"
+                },
+                {
+                    "x": 3,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "white"
+                }
+            ],
+            "extend_directions": [
+                "top",
+                "bottom"
+            ]
+        }
     }
     blocks = [
+        Block(x=3, y=4, z=3, colorID="white", time=time.time()),
+        Block(x=3, y=4, z=4, colorID="white", time=time.time()),
+        Block(x=5, y=5, z=3, colorID="white", time=time.time()),
+        Block(x=4, y=4, z=3, colorID="black", time=time.time()),
+        Block(x=5, y=4, z=3, colorID="black", time=time.time()),
+        Block(x=6, y=4, z=3, colorID="white", time=time.time()),
+
         Block(x=3, y=3, z=3, colorID="white", time=time.time()),
         Block(x=3, y=3, z=4, colorID="white", time=time.time()),
         Block(x=5, y=4, z=3, colorID="white", time=time.time()),
         Block(x=4, y=3, z=3, colorID="black", time=time.time()),
         Block(x=5, y=3, z=3, colorID="black", time=time.time()),
-        Block(x=6, y=3, z=3, colorID="white", time=time.time())
+        Block(x=6, y=3, z=3, colorID="white", time=time.time()),
+
+        Block(x=3, y=3, z=4, colorID="white", time=time.time()),
+        Block(x=3, y=3, z=5, colorID="white", time=time.time()),
+        Block(x=5, y=4, z=4, colorID="white", time=time.time()),
+        Block(x=4, y=3, z=4, colorID="black", time=time.time()),
+        Block(x=5, y=3, z=4, colorID="black", time=time.time()),
+        Block(x=6, y=3, z=4, colorID="white", time=time.time()),
+
+        Block(x=13, y=13, z=13, colorID="white", time=time.time()),
+        Block(x=13, y=13, z=14, colorID="white", time=time.time()),
+        Block(x=15, y=14, z=13, colorID="white", time=time.time()),
+        Block(x=14, y=13, z=13, colorID="black", time=time.time()),
+        Block(x=15, y=13, z=13, colorID="black", time=time.time()),
+        Block(x=16, y=13, z=13, colorID="white", time=time.time())
     ]
     result = recognize_pattern(patterns, blocks)
     data = {}
     for pattern_name, _blocks in result.items():
         data[pattern_name] = []
         for blocks in _blocks:
+            tmp = []
             for block in blocks:
-                data[pattern_name].append({
+                tmp.append({
                     "x": block.x,
                     "y": block.y,
                     "z": block.z,
                     "colorID": block.colorID
                 })
+            data[pattern_name].append(tmp)
     return make_response(jsonify(data))
 
 
@@ -475,48 +504,59 @@ def recognize_pattern(patterns, blocks):
     """
     patterns sample
     {
-        "road": [
-            {
-                左上のブロックの座標を原点とする
-                "x": 0,
-                "y": 0,
-                "z": 0,
-                "colorID": "white"
-            },
-            {
-                原点からの相対座標
-                "x": 1,
-                "y": 0,
-                "z": 0,
-                "colorID": "black"
-            },
-            {
-                "x": 2,
-                "y": 0,
-                "z": 0,
-                "colorID": "black"
-            },
-            {
-                "x": 3,
-                "y": 0,
-                "z": 0,
-                "colorID": "white"
-            }
-        ]
+        "road": {
+            "blocks": [
+                {
+                    左上のブロックの座標を原点とする
+                    "x": 0,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "white"
+                },
+                {
+                    原点からの相対座標
+                    "x": 1,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "black"
+                },
+                {
+                    "x": 2,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "black"
+                },
+                {
+                    "x": 3,
+                    "y": 0,
+                    "z": 0,
+                    "colorID": "white"
+                }
+            ],
+            "extend_directions": [
+                "right",
+                "left",
+                "top",
+                "bottom"
+            ]
+        }
     }
     """
 
-    # 優先度 x, y, z
-    # 左上からx軸, y軸, z軸の順に探索していく
-    for pattern_blocks in patterns.values():
+    # x軸, y軸, z軸の順に若いものから並べていく
+    for pattern_value in patterns.values():
+        pattern_blocks = pattern_value.get("blocks")
         pattern_blocks.sort(key=lambda b: (b["z"], b["y"], b["x"]))
 
+    """
+    あらかじめ色でフィルターをかけて探索するブロックを厳選しておく
+    """
     use_color = []
-    for pattern_blocks in patterns.values():
+    for pattern_value in patterns.values():
+        pattern_blocks = pattern_value.get("blocks")
         for pattern_block in pattern_blocks:
             if pattern_block.get("colorID") not in use_color:
                 use_color.append(pattern_block.get("colorID"))
-
     target_blocks = [block for block in blocks if block.colorID in use_color]
     target_blocks.sort(key=lambda b: (b.z, b.y, b.x))
 
@@ -538,26 +578,80 @@ def recognize_pattern(patterns, blocks):
     }
     """
     found_objects = {}
-    for pattern_name, pattern_blocks in patterns.items():
+    for pattern_name, pattern_value in patterns.items():
+        pattern_blocks = pattern_value.get("blocks")
+        """
+        全探索をする
+        """
         for b_index in range(len(target_blocks)):
             tmp_block_keeper = []
+            """
+            パターンに一致するか確認する 一致しないブロックがあればその時点で次のブロックに移行する
+            """
             for ((p_index, pattern_block), block) in zip(enumerate(pattern_blocks), target_blocks[b_index:]):
+                # 1個目はcolorIDのみを確認する(最初のブロックの相対座標は原点に設定されているので)
                 if p_index == 0:
                     if not block.colorID == pattern_block.get("colorID"):
                         break
-                elif not block.colorID == pattern_block.get("colorID"):
+                # 1個目以降はcolorIDに加えて座標も確認する
+                elif block.colorID == pattern_block.get("colorID"):
                     is_x_same = pattern_block.get("x") - pattern_blocks[p_index-1].get("x") == block.x - last_block.x
                     is_y_same = pattern_block.get("y") - pattern_blocks[p_index-1].get("y") == block.y - last_block.y
                     is_z_same = pattern_block.get("z") - pattern_blocks[p_index-1].get("z") == block.z - last_block.z
                     if not (is_x_same and is_y_same and is_z_same):
                         break
+                else:
+                    break
 
                 last_block = block
                 tmp_block_keeper.append(block)
+
                 if p_index == len(pattern_blocks)-1:
                     if pattern_name in found_objects.keys():
                         found_objects[pattern_name].append(tmp_block_keeper)
                     else:
                         found_objects[pattern_name] = [tmp_block_keeper]
+
+    """
+    mergeできるものがあればする
+    """
+    for pattern_name, found_object in found_objects.items():
+        pattern = patterns.get(pattern_name)
+        pattern_blocks = pattern.get("blocks")
+        extend_directions = pattern.get("extend_directions")
+        tmp_pattern_blocks = sorted(pattern_blocks, key=lambda b: b["x"], reverse=True)
+        pattern_width = tmp_pattern_blocks[0].get("x") + 1
+        tmp_pattern_blocks = sorted(pattern_blocks, key=lambda b: b["z"], reverse=True)
+        pattern_height = tmp_pattern_blocks[0].get("z") + 1
+
+        """
+        mergeできるものを全探索する
+        """
+        for extend_direction in extend_directions:
+            for index in range(len(found_object)-1):
+                for found_blocks in found_object[index+1:]:
+                    x = found_object[index][0].x
+                    _x = found_blocks[0].x
+                    y = found_object[index][0].y
+                    _y = found_blocks[0].y
+                    z = found_object[index][0].z
+                    _z = found_blocks[0].z
+
+                    if extend_direction == "right":
+                        if x+pattern_width == _x and y == _y and z == _z:
+                            found_object[index].extend(found_blocks)
+                            found_object.remove(found_blocks)
+                    elif extend_direction == "left":
+                        if x-pattern_width == _x and y == _y and z == _z:
+                            found_object[index].extend(found_blocks)
+                            found_object.remove(found_blocks)
+                    elif extend_direction == "top":
+                        if x == _x and y == _y and z+pattern_height == _z:
+                            found_object[index].extend(found_blocks)
+                            found_object.remove(found_blocks)
+                    elif extend_direction == "bottom":
+                        if x == _x and y == _y and z-pattern_height == _z:
+                            found_object[index].extend(found_blocks)
+                            found_object.remove(found_blocks)
 
     return found_objects
