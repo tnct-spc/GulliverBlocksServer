@@ -474,7 +474,7 @@ def recognize_pattern(patterns, blocks):
     target_blocks.sort(key=lambda _b: _b.x ** 2 + _b.y ** 2 + _b.z ** 2)
 
     """
-    found_objects sample
+    found_patterns sample
     {
         "road": [
             [
@@ -490,7 +490,7 @@ def recognize_pattern(patterns, blocks):
         ]
     }
     """
-    found_objects = {}
+    found_patterns = {}
     for pattern_name, pattern_value in patterns.items():
         pattern_blocks = pattern_value.get("blocks")
         """
@@ -525,37 +525,48 @@ def recognize_pattern(patterns, blocks):
                         # 条件に当てはまるブロックが見つからなかったら、すぐに次の候補に進む
                         break
 
+                # パターンに一致するブロック群を保存する
                 if len(found_blocks) == len(pattern_blocks):
-                    if pattern_name in found_objects.keys():
-                        found_objects[pattern_name].append(found_blocks)
+                    if pattern_name in found_patterns.keys():
+                        found_patterns[pattern_name].append(found_blocks)
                     else:
-                        found_objects[pattern_name] = [found_blocks]
+                        found_patterns[pattern_name] = [found_blocks]
                     # パターンとして認識したブロックは探索対象から除外する
                     used_blocks.extend(found_blocks)
 
     """
     merge処理
     """
-    for pattern_name, found_pattern_objects in found_objects.items():
+    for pattern_name, found_pattern_objects in found_patterns.items():
         pattern = patterns.get(pattern_name)
         merged_objects = []
-        for merge_base_object in found_pattern_objects:
-            if merge_base_object not in [merged_blocks for objects in merged_objects for merged_blocks in objects]:
-                _merged_objects = []
-                _merged_objects = merge_found_object(pattern, found_pattern_objects, merge_base_object, _merged_objects)
-                if _merged_objects:
-                    merged_objects.append(_merged_objects)
+        """
+        見つけたパターンに一致するブロック群それぞれにマージできるものがあるか確認する
+        """
+        for found_pattern_object in found_pattern_objects:
+            if found_pattern_object not in [merged_blocks for objects in merged_objects for merged_blocks in objects]:
+                tmp_merged_objects = []
+                tmp_merged_objects = merge_found_object(
+                    pattern=pattern,
+                    found_pattern_objects=found_pattern_objects,
+                    merge_base_object=found_pattern_object,
+                    merged_objects=tmp_merged_objects
+                )
+                if tmp_merged_objects:
+                    merged_objects.append(tmp_merged_objects)
         if merged_objects:
             for objects in merged_objects:
                 tmp_blocks = []
+                # それぞれのブロックを一つにまとめる
                 for blocks in objects:
-                    found_objects[pattern_name].remove(blocks)
+                    found_patterns[pattern_name].remove(blocks)
                     tmp_blocks.extend(blocks)
-                found_objects[pattern_name].append(tmp_blocks)
+                found_patterns[pattern_name].append(tmp_blocks)
 
-    return found_objects
+    return found_patterns
 
 
+# 再帰させるために関数化した
 def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged_objects):
     pattern_blocks = pattern.get("blocks")
     extend_directions = pattern.get("extend_directions")
@@ -590,6 +601,7 @@ def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged
                     if x == _x and y == _y and z - pattern_height == _z:
                         can_merge_objects.append(found_blocks)
 
+    # マージできるものがあればマージリストにいれて、さらに連結部分のマージが可能かどうかも確認する
     if can_merge_objects:
         if not merged_objects:
             merged_objects.append(merge_base_object)
