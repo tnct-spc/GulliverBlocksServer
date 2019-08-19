@@ -1,4 +1,4 @@
-from api._db import db
+from api._app import db
 from api.models import Block, Map, Merge, MergeMap, RealSense
 from datetime import datetime
 
