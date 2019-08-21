@@ -73,7 +73,6 @@ class MergeMap(Base):
     def __repr__(self):
         return "<MergeMap(merge_id='%s', map_id='%s')>" % (self.merge_id, self.map_id)
 
-
 class ColorRule(Base):
     __tablename__ = 'color_rule'
     id = Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
