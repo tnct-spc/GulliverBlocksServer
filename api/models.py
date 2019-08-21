@@ -48,6 +48,8 @@ class Merge(Base):
     __tablename__ = 'merge'
     id = Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = Column(String, nullable=False)
+    
+    merge_map = relationship('MergeMap', backref='merge', lazy=True)
     def __repr__(self):
         return "<Merge(name='%s')>" % (self.name)
 
