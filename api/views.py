@@ -1,11 +1,13 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap
-from api._app import db
+from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap, Pattern, PatternBlock
+from api._db import db
 from api._redis import redis_connection
 import json
 import time
 from math import sin, cos, radians
 import copy
+from uuid import uuid4
+from threading import Thread
 
 
 api_app = Blueprint('api_app', __name__)
@@ -79,6 +81,11 @@ def add_block(realsense_id):
         db.session.commit()
     except:
         return make_response('integrity error'), 500
+
+    # ブロックのパターン認識を非同期でする
+    _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+    thread = Thread(target=recognize_pattern, args=[_blocks])
+    thread.start()
 
     # websocket 配信
     message = {
@@ -419,7 +426,36 @@ def get_merged_blocks(merge_id):
     return make_response(jsonify(data))
 
 
-def recognize_pattern(patterns, blocks):
+@api_app.route("/get_patterns/")
+def get_patterns():
+    patterns = db.session.query(Pattern).all()
+    data = {}
+    for pattern in patterns:
+        data[pattern.name] = {}
+        blocks = db.session.query(Block).filter_by(pattern_name=pattern.name).all()
+        for block in blocks:
+            if str(block.pattern_group_id) in data[pattern.name].keys():
+                data[pattern.name][str(block.pattern_group_id)].append({
+                    "ID": str(block.id),
+                    "x": block.x,
+                    "y": block.y,
+                    "z": block.z,
+                    "colorID": block.colorID,
+                    "time": block.time
+                })
+            else:
+                data[pattern.name][str(block.pattern_group_id)] = [{
+                    "ID": str(block.id),
+                    "x": block.x,
+                    "y": block.y,
+                    "z": block.z,
+                    "colorID": block.colorID,
+                    "time": block.time
+                }]
+    return make_response(jsonify(data))
+
+
+def recognize_pattern(blocks):
     """
     patterns sample
     {
@@ -461,6 +497,24 @@ def recognize_pattern(patterns, blocks):
         }
     }
     """
+    # PatternとPatternBlockを使いやすいように加工する
+    _patterns = db.session.query(Pattern).all()
+    patterns = {}
+    for patten in _patterns:
+        patterns[patten.name] = {}
+        patterns[patten.name]["blocks"] = db.session.query(PatternBlock).filter_by(pattern_id=patten.id).all()
+        patterns[patten.name]["blocks"].sort(key=lambda b: b.x**2 + b.y**2 + b.z**2)
+
+        patterns[patten.name]["extend_directions"] = []
+        tmp_pattern_extend_directions = [
+            [patten.extend_to_right, "right"],
+            [patten.extend_to_left, "left"],
+            [patten.extend_to_top, "top"],
+            [patten.extend_to_bottom, "bottom"]
+        ]
+        for tmp_pattern_extend_direction in tmp_pattern_extend_directions:
+            if tmp_pattern_extend_direction[0]:
+                patterns[patten.name]["extend_directions"].append(tmp_pattern_extend_direction[1])
 
     """
     あらかじめ色でフィルターをかけて探索するブロックを厳選しておく
@@ -469,8 +523,8 @@ def recognize_pattern(patterns, blocks):
     for pattern_value in patterns.values():
         pattern_blocks = pattern_value.get("blocks")
         for pattern_block in pattern_blocks:
-            if pattern_block.get("colorID") not in use_color:
-                use_color.append(pattern_block.get("colorID"))
+            if pattern_block.colorID not in use_color:
+                use_color.append(pattern_block.colorID)
     target_blocks = copy.deepcopy([block for block in blocks if block.colorID in use_color])
     target_blocks.sort(key=lambda _b: _b.x ** 2 + _b.y ** 2 + _b.z ** 2)
 
@@ -508,16 +562,16 @@ def recognize_pattern(patterns, blocks):
                     found_block = None
                     # 相対座標の原点に設定するので、1個目はcolorIDのみ確認する
                     if index == 0:
-                        if block.colorID == pattern_block.get("colorID"):
+                        if block.colorID == pattern_block.colorID:
                             found_block = block
                     # 2個目からはcolorIDに加えて座標も確認する
                     else:
                         for _block in target_blocks:
                             if _block not in used_blocks:
-                                is_x_same = block.x + pattern_block.get("x") == _block.x
-                                is_y_same = block.y + pattern_block.get("y") == _block.y
-                                is_z_same = block.z + pattern_block.get("z") == _block.z
-                                is_color_same = pattern_block.get("colorID") == _block.colorID
+                                is_x_same = block.x + pattern_block.x == _block.x
+                                is_y_same = block.y + pattern_block.y == _block.y
+                                is_z_same = block.z + pattern_block.z == _block.z
+                                is_color_same = pattern_block.colorID == _block.colorID
                                 if is_x_same and is_y_same and is_z_same and is_color_same:
                                     found_block = _block
                     if found_block:
@@ -564,6 +618,21 @@ def recognize_pattern(patterns, blocks):
                     tmp_blocks.extend(blocks)
                 found_patterns[pattern_name].append(tmp_blocks)
 
+    # dbに反映
+    for pattern_name, found_objects in found_patterns.items():
+        pattern = db.session.query(Pattern).filter_by(name=pattern_name).first()
+        for found_blocks in found_objects:
+            pattern_group_id = uuid4()
+            for found_block in found_blocks:
+                found_block.pattern_group_id = pattern_group_id
+                found_block.pattern_name = pattern.name
+                db.session.add(found_block)
+    try:
+        db.session.commit()
+    except:
+        db.session.rollback()
+        return make_response('integrity error'), 500
+
     return found_patterns
 
 
@@ -571,10 +640,10 @@ def recognize_pattern(patterns, blocks):
 def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged_objects):
     pattern_blocks = pattern.get("blocks")
     extend_directions = pattern.get("extend_directions")
-    tmp_pattern_blocks = sorted(pattern_blocks, key=lambda b: b["x"], reverse=True)
-    pattern_width = tmp_pattern_blocks[0].get("x") + 1
-    tmp_pattern_blocks = sorted(pattern_blocks, key=lambda b: b["z"], reverse=True)
-    pattern_height = tmp_pattern_blocks[0].get("z") + 1
+    tmp_pattern_blocks = sorted(pattern_blocks, key=lambda b: b.x, reverse=True)
+    pattern_width = tmp_pattern_blocks[0].x + 1
+    tmp_pattern_blocks = sorted(pattern_blocks, key=lambda b: b.z, reverse=True)
+    pattern_height = tmp_pattern_blocks[0].z + 1
 
     """
     mergeできるものを全探索する
