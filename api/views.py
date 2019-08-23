@@ -84,7 +84,7 @@ def add_block(realsense_id):
 
     # ブロックのパターン認識を非同期でする
     _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-    thread = Thread(target=recognize_pattern, args=[_blocks])
+    thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
     thread.start()
 
     # websocket 配信
@@ -92,11 +92,11 @@ def add_block(realsense_id):
         'blocks': []
     }
     message['blocks'].extend([{
-        'put': False,
+        'status': "delete",
         'ID': str(block_id)
     } for block_id in deleted_block_ids])
     message['blocks'].extend([{
-        "put": True,
+        "status": "add",
         "ID": str(block.id),
         "colorID": block.colorID,
         "time": block.time,
@@ -455,7 +455,7 @@ def get_patterns():
     return make_response(jsonify(data))
 
 
-def recognize_pattern(blocks):
+def recognize_pattern(blocks, map_id):
     """
     patterns sample
     {
@@ -620,6 +620,7 @@ def recognize_pattern(blocks):
 
     # dbに反映
     tmp_found_blocks = []
+    changed_pattern_blocks = []
     for pattern_name, found_objects in found_patterns.items():
         pattern = db.session.query(Pattern).filter_by(name=pattern_name).first()
         for found_blocks in found_objects:
@@ -629,18 +630,43 @@ def recognize_pattern(blocks):
                 if not found_block.pattern_name:
                     found_block.pattern_group_id = pattern_group_id
                     found_block.pattern_name = pattern.name
+                    changed_pattern_blocks.append(found_block)
                     db.session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
             block.pattern_name = None
             block.pattern_group_id = None
+            changed_pattern_blocks.append(block)
             db.session.add(block)
     try:
         db.session.commit()
     except:
         db.session.rollback()
         return make_response('integrity error'), 500
+
+    # websocket配信
+    if changed_pattern_blocks:
+        message = {
+            "blocks": []
+        }
+        for changed_pattern_block in changed_pattern_blocks:
+            message["blocks"].append({
+                "status": "update",
+                "ID": str(changed_pattern_block.id),
+                "x": changed_pattern_block.x,
+                "y": changed_pattern_block.y,
+                "z": changed_pattern_block.z,
+                "colorID": changed_pattern_block.colorID,
+                "time": changed_pattern_block.time,
+                "pattern_name": changed_pattern_block.pattern_name,
+                "pattern_group_id": str(changed_pattern_block.pattern_group_id)
+            })
+        data = {
+            "map_id": str(map_id),
+            "message": message
+        }
+        redis_connection.publish("received_message", json.dumps(data))
 
     return found_patterns
 
