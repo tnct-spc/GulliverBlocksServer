@@ -626,9 +626,10 @@ def recognize_pattern(blocks):
             pattern_group_id = uuid4()
             for found_block in found_blocks:
                 tmp_found_blocks.append(found_block)
-                found_block.pattern_group_id = pattern_group_id
-                found_block.pattern_name = pattern.name
-                db.session.add(found_block)
+                if not found_block.pattern_name:
+                    found_block.pattern_group_id = pattern_group_id
+                    found_block.pattern_name = pattern.name
+                    db.session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
