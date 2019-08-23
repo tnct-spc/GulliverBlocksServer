@@ -613,20 +613,28 @@ def recognize_pattern(blocks):
             for objects in merged_objects:
                 tmp_blocks = []
                 # それぞれのブロックを一つにまとめる
-                for blocks in objects:
-                    found_patterns[pattern_name].remove(blocks)
-                    tmp_blocks.extend(blocks)
+                for _blocks in objects:
+                    found_patterns[pattern_name].remove(_blocks)
+                    tmp_blocks.extend(_blocks)
                 found_patterns[pattern_name].append(tmp_blocks)
 
     # dbに反映
+    tmp_found_blocks = []
     for pattern_name, found_objects in found_patterns.items():
         pattern = db.session.query(Pattern).filter_by(name=pattern_name).first()
         for found_blocks in found_objects:
             pattern_group_id = uuid4()
             for found_block in found_blocks:
+                tmp_found_blocks.append(found_block)
                 found_block.pattern_group_id = pattern_group_id
                 found_block.pattern_name = pattern.name
                 db.session.add(found_block)
+    # パターンでなくなったブロックの処理
+    for block in target_blocks:
+        if block.pattern_name and block not in tmp_found_blocks:
+            block.pattern_name = None
+            block.pattern_group_id = None
+            db.session.add(block)
     try:
         db.session.commit()
     except:

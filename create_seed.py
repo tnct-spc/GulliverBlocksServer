@@ -30,8 +30,8 @@ if __name__ == "__main__":
 
     pattern_blocks = [
         PatternBlock(x=0, y=0, z=0, colorID="white", pattern_id=pattern.id),
-        PatternBlock(x=1, y=0, z=0, colorID="white", pattern_id=pattern.id),
-        PatternBlock(x=2, y=0, z=0, colorID="white", pattern_id=pattern.id),
+        PatternBlock(x=1, y=0, z=0, colorID="black", pattern_id=pattern.id),
+        PatternBlock(x=2, y=0, z=0, colorID="black", pattern_id=pattern.id),
         PatternBlock(x=3, y=0, z=0, colorID="white", pattern_id=pattern.id)
     ]
     for pattern_block in pattern_blocks:
