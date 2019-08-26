@@ -9,6 +9,13 @@ if __name__ == "__main__":
     db.session.add(map)
     db.session.commit()
 
+    merge = Merge(name="test")
+    db.session.add(merge)
+    db.session.commit()
+
+    merge_map = MergeMap(x=0, y=0, rotate=0, map_id=map.id, merge_id=merge.id)
+    db.session.add(merge_map)
+
     realsense = RealSense(name='test_realsense', current_map_id=map.id)
     db.session.add(realsense)
     db.session.commit()
