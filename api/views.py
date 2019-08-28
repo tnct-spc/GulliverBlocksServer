@@ -167,10 +167,10 @@ def get_blocks(map_id):
 
     pattern_blocks_data = {}
     for block in blocks:
-        if block.pattern_name not in pattern_blocks_data.keys():
+        if block.pattern_name and block.pattern_name not in pattern_blocks_data.keys():
             pattern_blocks_data[block.pattern_name] = {}
 
-        if str(block.pattern_group_id) in pattern_blocks_data[block.pattern_name].keys():
+        if block.pattern_group_id and str(block.pattern_group_id) in pattern_blocks_data[block.pattern_name].keys():
             pattern_blocks_data[block.pattern_name][str(block.pattern_group_id)].append({
                 "ID": str(block.id),
                 "x": block.x,
@@ -437,10 +437,10 @@ def get_merged_blocks(merge_id):
             merged_blocks.append(block)
 
             # pattern_blocks_dataのvalidate
-            if block.pattern_name not in pattern_blocks_data.keys():
+            if block.pattern_name and block.pattern_name not in pattern_blocks_data.keys():
                 pattern_blocks_data[block.pattern_name] = {}
 
-            if str(block.pattern_group_id) in pattern_blocks_data[block.pattern_name].keys():
+            if block.pattern_group_id and str(block.pattern_group_id) in pattern_blocks_data[block.pattern_name].keys():
                 pattern_blocks_data[block.pattern_name][str(block.pattern_group_id)].append({
                     "ID": str(block.id),
                     "x": block.x,
