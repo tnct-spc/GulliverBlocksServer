@@ -33,15 +33,19 @@ if __name__ == "__main__":
         Block(x=1, y=3, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
         Block(x=2, y=2, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
         Block(x=1, y=2, z=4, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
-        Block(x=1, y=2, z=2, colorID="1", time=datetime.now().timestamp(), map_id=map.id)
+        Block(x=1, y=2, z=2, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=1, y=2, z=1, colorID="9", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=2, y=2, z=1, colorID="0", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=3, y=2, z=1, colorID="0", time=datetime.now().timestamp(), map_id=map.id),
+        Block(x=4, y=2, z=1, colorID="9", time=datetime.now().timestamp(), map_id=map.id)
     ]
     for block in blocks:
         db.session.add(block)
     pattern_blocks = [
-        PatternBlock(x=0, y=0, z=0, colorID="white", pattern_id=pattern.id),
-        PatternBlock(x=1, y=0, z=0, colorID="black", pattern_id=pattern.id),
-        PatternBlock(x=2, y=0, z=0, colorID="black", pattern_id=pattern.id),
-        PatternBlock(x=3, y=0, z=0, colorID="white", pattern_id=pattern.id)
+        PatternBlock(x=0, y=0, z=0, colorID="9", pattern_id=pattern.id),
+        PatternBlock(x=1, y=0, z=0, colorID="0", pattern_id=pattern.id),
+        PatternBlock(x=2, y=0, z=0, colorID="0", pattern_id=pattern.id),
+        PatternBlock(x=3, y=0, z=0, colorID="9", pattern_id=pattern.id)
     ]
     for pattern_block in pattern_blocks:
         db.session.add(pattern_block)
