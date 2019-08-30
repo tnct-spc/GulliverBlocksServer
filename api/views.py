@@ -740,3 +740,28 @@ def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged
             merged_objects = merge_found_object(pattern, found_pattern_objects, can_merge_object, merged_objects)
 
     return merged_objects
+
+
+import datetime
+from flask import redirect, render_template
+@api_app.route("/debug/<uuid:map_id>/", methods=["GET", "POST"])
+def degug(map_id):
+    if request.method == "GET":
+        return render_template("debug.html")
+    else:
+        data = request.form["data"]
+        map = db.session.query(Map).filter_by(id=map_id).first()
+        nodes = data.splitlines()
+        for node in nodes:
+            values = node.split(",")
+            x = int(values[0])
+            y = int(values[1])
+            z = int(values[2])
+            colorID = values[3]
+            db.session.add(Block(x=x, y=y, z=z, colorID=colorID, time=datetime.datetime.now().timestamp(), map_id=map.id))
+        try:
+            db.session.commit()
+        except:
+            db.rollback()
+
+        return make_response(redirect("/get_blocks/"+str(map.id)+"/"))
