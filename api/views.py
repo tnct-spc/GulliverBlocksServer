@@ -168,6 +168,7 @@ def get_blocks(map_id):
             "pattern_name": block.pattern_name,
             "pattern_group_id": str(block.pattern_group_id) if block.pattern_group_id else None
         })
+
     return make_response(jsonify(data))
 
 
