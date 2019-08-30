@@ -83,38 +83,12 @@ paths:
                     z:
                       type: "integer"
                       example: 3
-              pattern_blocks:
-                type: "object"
-                description: "パターン認識されたブロックの情報"
-                properties:
-                  pattern_name:
-                    type: "object"
-                    properties:
-                      pattern_group_id<uuid>:
-                        type: "array"
-                        items:
-                          type: "object"
-                          properties:
-                            ID:
-                              type: "string"
-                              format: "uuid"
-                              description: "blockのid"
-                            colorID:
-                                type: "string"
-                                example: "1"
-                            time:
-                                type: "integer"
-                                format: "unixtime"
-                            x:
-                                type: "integer"
-                                example: 1
-                            y:
-                                type: "integer"
-                                example: 2
-                            z:
-                                type: "integer"
-                                example: 3
-
+                    pattern_name:
+                      type: "string"
+                      example: "road"
+                    pattern_group_id:
+                      type: "string"
+                      format: "uuid"
 
   /get_color_rule/{map_id}/:
     get:
@@ -261,37 +235,13 @@ paths:
                     z:
                       type: "integer"
                       example: 3
-              pattern_blocks:
-                type: "object"
-                description: "パターン認識されたブロックの情報"
-                properties:
-                  pattern_name:
-                    type: "object"
-                    properties:
-                      pattern_group_id<uuid>:
-                        type: "array"
-                        items:
-                          type: "object"
-                          properties:
-                            ID:
-                              type: "string"
-                              format: "uuid"
-                              description: "blockのid"
-                            colorID:
-                                type: "string"
-                                example: "1"
-                            time:
-                                type: "integer"
-                                format: "unixtime"
-                            x:
-                                type: "integer"
-                                example: 1
-                            y:
-                                type: "integer"
-                                example: 2
-                            z:
-                                type: "integer"
-                                example: 3
+                    pattern_name:
+                      type: "string"
+                      example: "road"
+                    pattern_group_id:
+                      type: "string"
+                      format: "uuid"
+
   /debug_add_blocks/{map_id}/:
     post:
       tags:
