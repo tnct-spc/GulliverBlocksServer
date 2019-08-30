@@ -153,48 +153,22 @@ def merged_blocks_change_streaming(message, map_id):
 @api_app.route('/get_blocks/<uuid:map_id>/')
 def get_blocks(map_id):
     blocks = db.session.query(Block).filter_by(map_id=map_id)
-    blocks_data = []
+
+    data = {
+        "blocks": [],
+    }
     for block in blocks:
-        tmp_dic = {
+        data["blocks"].append({
             "ID": block.id,
             "colorID": block.colorID,
             "time": block.time,
             "x": block.x,
             "y": block.y,
-            "z": block.z
-        }
-        blocks_data.append(tmp_dic)
+            "z": block.z,
+            "pattern_name": block.pattern_name,
+            "pattern_group_id": str(block.pattern_group_id) if block.pattern_group_id else None
+        })
 
-    pattern_blocks_data = {}
-    for block in blocks:
-        if block.pattern_name:
-            if block.pattern_name not in pattern_blocks_data.keys():
-                pattern_blocks_data[block.pattern_name] = {}
-
-        if block.pattern_group_id:
-            if str(block.pattern_group_id) in pattern_blocks_data[block.pattern_name].keys():
-                pattern_blocks_data[block.pattern_name][str(block.pattern_group_id)].append({
-                    "ID": str(block.id),
-                    "x": block.x,
-                    "y": block.y,
-                    "z": block.z,
-                    "colorID": block.colorID,
-                    "time": block.time
-                })
-            else:
-                pattern_blocks_data[block.pattern_name][str(block.pattern_group_id)] = [{
-                    "ID": str(block.id),
-                    "x": block.x,
-                    "y": block.y,
-                    "z": block.z,
-                    "colorID": block.colorID,
-                    "time": block.time
-                }]
-
-    data = {
-        "blocks": blocks_data,
-        "pattern_blocks": pattern_blocks_data
-    }
     return make_response(jsonify(data))
 
 
@@ -418,7 +392,6 @@ def create_merge_map():
 def get_merged_blocks(merge_id):
     merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id).all()
     merged_blocks = []
-    pattern_blocks_data = {}
 
     for merge_map in merge_maps:
         blocks = db.session.query(Block).filter_by(map_id=merge_map.map_id).all()
@@ -438,34 +411,8 @@ def get_merged_blocks(merge_id):
 
             merged_blocks.append(block)
 
-            # pattern_blocks_dataのvalidate
-            if block.pattern_name:
-                if block.pattern_name not in pattern_blocks_data.keys():
-                    pattern_blocks_data[block.pattern_name] = {}
-
-            if block.pattern_group_id:
-                if str(block.pattern_group_id) in pattern_blocks_data[block.pattern_name].keys():
-                    pattern_blocks_data[block.pattern_name][str(block.pattern_group_id)].append({
-                        "ID": str(block.id),
-                        "x": block.x,
-                        "y": block.y,
-                        "z": block.z,
-                        "colorID": block.colorID,
-                        "time": block.time
-                    })
-                else:
-                    pattern_blocks_data[block.pattern_name][str(block.pattern_group_id)] = [{
-                        "ID": str(block.id),
-                        "x": block.x,
-                        "y": block.y,
-                        "z": block.z,
-                        "colorID": block.colorID,
-                        "time": block.time
-                    }]
-
     data = {
         "blocks": [],
-        "pattern_blocks_data": pattern_blocks_data
     }
     for merged_block in merged_blocks:
         data["blocks"].append({
@@ -474,7 +421,9 @@ def get_merged_blocks(merge_id):
             "time": merged_block.time,
             "x": merged_block.x,
             "y": merged_block.y,
-            "z": merged_block.z
+            "z": merged_block.z,
+            "pattern_name": merged_block.pattern_name,
+            "pattern_group_id": str(merged_block.pattern_group_id) if merged_block.pattern_group_id else None
         })
 
     return make_response(jsonify(data))
