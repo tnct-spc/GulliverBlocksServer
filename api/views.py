@@ -750,3 +750,19 @@ def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged
             merged_objects = merge_found_object(pattern, found_pattern_objects, can_merge_object, merged_objects)
 
     return merged_objects
+
+@api_app.route('/get_realsense/')
+def get_realsense_fn():
+    data = {}
+    data["realsense"] = []
+    for realsense in db.session.query(RealSense).all():
+        print(realsense)
+        current_map = ""
+        if (realsense.current_map_id is not None):
+            current_map = db.session.query(Map).filter_by(id=realsense.current_map_id).first().name
+        data["realsense"].append({
+            "name": realsense.name,
+            "online": True, # To-DO
+            "current_map": current_map
+        })
+    return make_response(jsonify(data))

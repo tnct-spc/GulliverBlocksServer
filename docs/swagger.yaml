@@ -12,6 +12,7 @@ tags:
  - name: block
  - name: merge
  - name: colorRule
+ - name: realsense
 paths:
   /get_maps/:
     get:
@@ -474,6 +475,37 @@ paths:
       responses:
         200:
           description: "ok"
+  /get_realsense/:
+    get:
+      tags:
+        - realsense
+      summary: "realsense 一覧取得"
+      description: ""
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "realsense 一覧"
+          schema:
+            type: "object"
+            properties:
+              realsense:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    is_online:
+                      type: "boolean"
+                      example: "true"
+                      description: "onlineかどうか, 現状常にtrue"
+                    name:
+                      type: "string"
+                      example: "test_realsense"
+                      description: "realsenseの名前"
+                    current_map:
+                      type: "string"
+                      example: "test_map"
+                      description: "現在設定されてるmap"
 definitions:
   Block:
     type: "object"
