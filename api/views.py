@@ -219,13 +219,23 @@ def create_map():
     if request.content_type == "application/json":
         try:
             request.json["name"]
+            request.json["realsense_id"]
         except KeyError:
-            return make_response('name missing'), 400
+            return make_response('name or realsense missing'), 400
 
         name = request.json["name"]
         new_map = Map(name=name)
         db.session.add(new_map)
         try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+
+        try:
+            realsense_id = request.json["realsense_id"]
+            realsense = db.session.query(RealSense).filter_by(id=realsense_id).first()
+            realsense.current_map_id = new_map.id
             db.session.commit()
         except:
             db.session.rollback()
