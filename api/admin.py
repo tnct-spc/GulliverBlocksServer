@@ -11,6 +11,10 @@ admin = Admin(app, name='GulliverBlocksServer', template_mode='bootstrap3')
 
 class GBModelView(ModelView):
     column_display_pk = True
+    def __init__(self, model, session, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        super(GBModelView, self).__init__(model, session)
 
     def is_accessible(self):
         return True # TO-DO login必須にする
@@ -25,11 +29,11 @@ class BlockModelView(GBModelView):
             form.pattern_group_id.data = None
         return form
 
-admin.add_view(BlockModelView(Block, db.session))
+admin.add_view(BlockModelView(Block, db.session, column_filters=["map"]))
 admin.add_view(GBModelView(Map, db.session))
 admin.add_view(GBModelView(RealSense, db.session))
 admin.add_view(GBModelView(Merge, db.session))
-admin.add_view(GBModelView(MergeMap, db.session))
-admin.add_view(GBModelView(ColorRule, db.session))
+admin.add_view(GBModelView(MergeMap, db.session, column_filters=["merge"]))
+admin.add_view(GBModelView(ColorRule, db.session, column_filters=["map"]))
 admin.add_view(GBModelView(Pattern, db.session))
-admin.add_view(GBModelView(PatternBlock, db.session))
+admin.add_view(GBModelView(PatternBlock, db.session, column_filters=["pattern"]))
