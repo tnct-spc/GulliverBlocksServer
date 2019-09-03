@@ -219,13 +219,23 @@ def create_map():
     if request.content_type == "application/json":
         try:
             request.json["name"]
+            request.json["realsense_id"]
         except KeyError:
-            return make_response('name missing'), 400
+            return make_response('name or realsense missing'), 400
 
         name = request.json["name"]
         new_map = Map(name=name)
         db.session.add(new_map)
         try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+
+        try:
+            realsense_id = request.json["realsense_id"]
+            realsense = db.session.query(RealSense).filter_by(id=realsense_id).first()
+            realsense.current_map_id = new_map.id
             db.session.commit()
         except:
             db.session.rollback()
@@ -740,3 +750,19 @@ def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged
             merged_objects = merge_found_object(pattern, found_pattern_objects, can_merge_object, merged_objects)
 
     return merged_objects
+
+@api_app.route('/get_realsense/')
+def get_realsense_fn():
+    data = {}
+    data["realsense"] = []
+    for realsense in db.session.query(RealSense).all():
+        print(realsense)
+        current_map = ""
+        if (realsense.current_map_id is not None):
+            current_map = db.session.query(Map).filter_by(id=realsense.current_map_id).first().name
+        data["realsense"].append({
+            "name": realsense.name,
+            "online": True, # To-DO
+            "current_map": current_map
+        })
+    return make_response(jsonify(data))
