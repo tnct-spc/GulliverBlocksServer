@@ -10,6 +10,8 @@ admin = Admin(app, name='GulliverBlocksServer', template_mode='bootstrap3')
 
 
 class GBModelView(ModelView):
+    column_display_pk = True
+
     def is_accessible(self):
         return True # TO-DO login必須にする
 
@@ -17,11 +19,11 @@ class GBModelView(ModelView):
         return redirect('/')
 
 
-admin.add_view(ModelView(Block, db.session))
-admin.add_view(ModelView(Map, db.session))
-admin.add_view(ModelView(RealSense, db.session))
-admin.add_view(ModelView(Merge, db.session))
-admin.add_view(ModelView(MergeMap, db.session))
-admin.add_view(ModelView(ColorRule, db.session))
-admin.add_view(ModelView(Pattern, db.session))
-admin.add_view(ModelView(PatternBlock, db.session))
+admin.add_view(GBModelView(Block, db.session))
+admin.add_view(GBModelView(Map, db.session))
+admin.add_view(GBModelView(RealSense, db.session))
+admin.add_view(GBModelView(Merge, db.session))
+admin.add_view(GBModelView(MergeMap, db.session))
+admin.add_view(GBModelView(ColorRule, db.session))
+admin.add_view(GBModelView(Pattern, db.session))
+admin.add_view(GBModelView(PatternBlock, db.session))
