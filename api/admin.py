@@ -18,8 +18,14 @@ class GBModelView(ModelView):
     def inaccessible_callback(self, name, **kwargs):
         return redirect('/')
 
+class BlockModelView(GBModelView):
+    def create_form(self):
+        form = super(BlockModelView, self).create_form()
+        if form.pattern_group_id.data == "":
+            form.pattern_group_id.data = None
+        return form
 
-admin.add_view(GBModelView(Block, db.session))
+admin.add_view(BlockModelView(Block, db.session))
 admin.add_view(GBModelView(Map, db.session))
 admin.add_view(GBModelView(RealSense, db.session))
 admin.add_view(GBModelView(Merge, db.session))
