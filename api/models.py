@@ -46,6 +46,7 @@ class Merge(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
 
+    mereg_map = db.relationship('MergeMap', backref='merge', lazy=True)
     def __repr__(self):
         return "<Merge(name='%s')>" % self.name
 
