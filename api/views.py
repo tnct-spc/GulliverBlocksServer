@@ -316,8 +316,9 @@ def create_merge():
     if request.content_type == "application/json":
         try:
             request.json["name"]
+            request.json["merge_maps"]
         except KeyError:
-            return make_response('name missing'), 400
+            return make_response('name or merge_maps missing'), 400
 
         new_merge = Merge(name=request.json["name"])
         db.session.add(new_merge)
@@ -327,39 +328,7 @@ def create_merge():
             db.session.rollback()
             return make_response('integrity error'), 500
 
-        return make_response(jsonify({"message": "ok", "merge_id": str(new_merge.id)}))
-    else:
-        return make_response('content type must be application/json'), 406
-
-
-@api_app.route('/get_merge_maps/<uuid:merge_id>/')
-def get_merge_maps(merge_id):
-    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id)
-    data = {
-        "merge_maps": []
-    }
-    for merge_map in merge_maps:
-        data["merge_maps"].append({
-            "map_id": merge_map.map_id,
-            "x": merge_map.x,
-            "y": merge_map.y,
-            "rotate": merge_map.rotate
-        })
-    return make_response(jsonify(data))
-
-
-@api_app.route('/create_merge_map/', methods=["POST"])
-def create_merge_map():
-    if request.content_type == "application/json":
-        try:
-            request.json["merge_maps"]
-        except KeyError:
-            return make_response('merge_map data missing'), 400
-        try:
-            request.json["merge_id"]
-        except KeyError:
-            return make_response('merge_id missing'), 400
-
+        merge_id = new_merge.id
         merge_maps = request.json["merge_maps"]
         merge_map_objects = []
         for merge_map_data in merge_maps:
@@ -380,7 +349,7 @@ def create_merge_map():
             merge_map_objects.append(
                 MergeMap(
                     map_id=merge_map_data["map_id"],
-                    merge_id=request.json["merge_id"],
+                    merge_id=merge_id,
                     x=merge_map_data["x"],
                     y=merge_map_data["y"],
                     rotate=merge_map_data["rotate"]
@@ -396,6 +365,23 @@ def create_merge_map():
         return make_response('ok')
     else:
         return make_response('content type must be application/json'), 406
+
+
+
+@api_app.route('/get_merge_maps/<uuid:merge_id>/')
+def get_merge_maps(merge_id):
+    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id)
+    data = {
+        "merge_maps": []
+    }
+    for merge_map in merge_maps:
+        data["merge_maps"].append({
+            "map_id": merge_map.map_id,
+            "x": merge_map.x,
+            "y": merge_map.y,
+            "rotate": merge_map.rotate
+        })
+    return make_response(jsonify(data))
 
 
 @api_app.route('/get_merged_blocks/<uuid:merge_id>/')
