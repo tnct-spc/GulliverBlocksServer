@@ -403,7 +403,7 @@ def get_merged_blocks(merge_id):
             block.z = round(tmp_z * cos(rad) + tmp_x * sin(rad))
 
             block.x += merge_map.x
-            block.y += merge_map.y
+            block.z += merge_map.y
 
             merged_blocks.append(block)
 
