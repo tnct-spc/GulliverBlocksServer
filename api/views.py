@@ -129,11 +129,11 @@ def merged_blocks_change_streaming(message, map_id):
             changed_block = copy.deepcopy(_changed_block)
             rad = radians(90 * merge_map.rotate)
             tmp_x = changed_block["x"]
-            tmp_y = changed_block["y"]
-            changed_block["x"] = round(tmp_x * cos(rad) - tmp_y * sin(rad))
-            changed_block["y"] = round(tmp_y * cos(rad) + tmp_x * sin(rad))
+            tmp_z = changed_block["z"]
+            changed_block["x"] = round(tmp_x * cos(rad) - tmp_z * sin(rad))
+            changed_block["z"] = round(tmp_z * cos(rad) + tmp_x * sin(rad))
             changed_block["x"] += merge_map.x
-            changed_block["y"] += merge_map.y
+            changed_block["z"] += merge_map.y
 
             if merge.id in changed_merges.keys():
                 changed_merges[merge.id].append(changed_block)
@@ -398,12 +398,12 @@ def get_merged_blocks(merge_id):
             block = copy.deepcopy(_block)
             rad = radians(90 * merge_map.rotate)
             tmp_x = block.x
-            tmp_y = block.y
-            block.x = round(tmp_x * cos(rad) - tmp_y * sin(rad))
-            block.y = round(tmp_y * cos(rad) + tmp_x * sin(rad))
+            tmp_z = block.z
+            block.x = round(tmp_x * cos(rad) - tmp_z * sin(rad))
+            block.z = round(tmp_z * cos(rad) + tmp_x * sin(rad))
 
             block.x += merge_map.x
-            block.y += merge_map.y
+            block.z += merge_map.y
 
             merged_blocks.append(block)
 
