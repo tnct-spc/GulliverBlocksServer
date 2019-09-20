@@ -62,7 +62,7 @@ def add_block(realsense_id):
 
     deleted_block_ids = []
     for b in delete_blocks:
-        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z']).first()
+        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z'], map_id=map_id).first()
         deleted_block_ids.append(block_object.id)
         db.session.delete(block_object)
     put_block_objects = [
