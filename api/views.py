@@ -136,10 +136,10 @@ def merged_blocks_change_streaming(message, map_id):
                 changed_block["x"] += merge_map.x
                 changed_block["z"] += merge_map.y
 
-                if merge.id in changed_merges.keys():
-                    changed_merges[merge.id].append(changed_block)
-                else:
-                    changed_merges[merge.id] = [changed_block]
+            if merge.id in changed_merges.keys():
+                changed_merges[merge.id].append(changed_block)
+            else:
+                changed_merges[merge.id] = [changed_block]
 
     for merge_id, blocks in changed_merges.items():
         data = {
