@@ -127,18 +127,19 @@ def merged_blocks_change_streaming(message, map_id):
                 ブロックの座標移動処理
             """
             changed_block = copy.deepcopy(_changed_block)
-            rad = radians(90 * merge_map.rotate)
-            tmp_x = changed_block["x"]
-            tmp_z = changed_block["z"]
-            changed_block["x"] = round(tmp_x * cos(rad) - tmp_z * sin(rad))
-            changed_block["z"] = round(tmp_z * cos(rad) + tmp_x * sin(rad))
-            changed_block["x"] += merge_map.x
-            changed_block["z"] += merge_map.y
+            if changed_block["status"] == "add":
+                rad = radians(90 * merge_map.rotate)
+                tmp_x = changed_block["x"]
+                tmp_z = changed_block["z"]
+                changed_block["x"] = round(tmp_x * cos(rad) - tmp_z * sin(rad))
+                changed_block["z"] = round(tmp_z * cos(rad) + tmp_x * sin(rad))
+                changed_block["x"] += merge_map.x
+                changed_block["z"] += merge_map.y
 
-            if merge.id in changed_merges.keys():
-                changed_merges[merge.id].append(changed_block)
-            else:
-                changed_merges[merge.id] = [changed_block]
+                if merge.id in changed_merges.keys():
+                    changed_merges[merge.id].append(changed_block)
+                else:
+                    changed_merges[merge.id] = [changed_block]
 
     for merge_id, blocks in changed_merges.items():
         data = {
