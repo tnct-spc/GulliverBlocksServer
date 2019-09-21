@@ -62,7 +62,7 @@ def add_block(realsense_id):
 
     deleted_block_ids = []
     for b in delete_blocks:
-        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z']).first()
+        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z'], map_id=map_id).first()
         deleted_block_ids.append(block_object.id)
         db.session.delete(block_object)
     put_block_objects = [
@@ -127,13 +127,14 @@ def merged_blocks_change_streaming(message, map_id):
                 ブロックの座標移動処理
             """
             changed_block = copy.deepcopy(_changed_block)
-            rad = radians(90 * merge_map.rotate)
-            tmp_x = changed_block["x"]
-            tmp_z = changed_block["z"]
-            changed_block["x"] = round(tmp_x * cos(rad) - tmp_z * sin(rad))
-            changed_block["z"] = round(tmp_z * cos(rad) + tmp_x * sin(rad))
-            changed_block["x"] += merge_map.x
-            changed_block["z"] += merge_map.y
+            if changed_block["status"] == "add":
+                rad = radians(90 * merge_map.rotate)
+                tmp_x = changed_block["x"]
+                tmp_z = changed_block["z"]
+                changed_block["x"] = round(tmp_x * cos(rad) - tmp_z * sin(rad))
+                changed_block["z"] = round(tmp_z * cos(rad) + tmp_x * sin(rad))
+                changed_block["x"] += merge_map.x
+                changed_block["z"] += merge_map.y
 
             if merge.id in changed_merges.keys():
                 changed_merges[merge.id].append(changed_block)
