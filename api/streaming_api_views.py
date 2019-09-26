@@ -10,10 +10,10 @@ from uuid import uuid4
 from threading import Thread
 
 
-api_app = Blueprint('api_app', __name__)
+streaming_api_app = Blueprint('api_app', __name__)
 
 
-@api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
+@streaming_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):
     """
     postされたものをそのままwebsocketに流すコード, debug用
@@ -26,7 +26,7 @@ def add_block_for_debug(map_id):
     return make_response('ok')
 
 
-@api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
+@streaming_api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
 def add_block(realsense_id):
     """
     blockを追加/削除するapi
