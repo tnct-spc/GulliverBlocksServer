@@ -1,19 +1,29 @@
-from flask import Blueprint, make_response, request
-from api.models import Block, RealSense, Merge, MergeMap, Pattern, PatternBlock
+from flask import Blueprint, make_response, jsonify, request
+from api.models import Block, RealSense, MergeMap, Merge, Pattern, PatternBlock
+from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 from api._redis import redis_connection
-import json
 import time
+from threading import Thread
+import json
 from math import sin, cos, radians
 import copy
 from uuid import uuid4
-from threading import Thread
 
 
-streaming_api_app = Blueprint('api_app', __name__)
+block_api_app = Blueprint('block_api_app', __name__)
 
 
-@streaming_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
+@block_api_app.route('/get_blocks/<uuid:map_id>/')
+def get_blocks(map_id):
+    blocks = db.session.query(Block).filter_by(map_id=map_id)
+
+    data = {"blocks": model_to_json(Block, blocks)}
+
+    return make_response(jsonify(data))
+
+
+@block_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):
     """
     postされたものをそのままwebsocketに流すコード, debug用
@@ -26,7 +36,7 @@ def add_block_for_debug(map_id):
     return make_response('ok')
 
 
-@streaming_api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
+@block_api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
 def add_block(realsense_id):
     """
     blockを追加/削除するapi
