@@ -1,21 +1,41 @@
 from api._db import db
-from api.models import Block, Map, Merge, MergeMap, RealSense, Pattern, PatternBlock
+from api.models import Block, Map, Merge, MergeMap, RealSense, Pattern, PatternBlock, User
 from datetime import datetime
 
 if __name__ == "__main__":
+    user = User(username="admin")
+    user.set_password("gulliver")
+    db.session.add(user)
+    try:
+        db.session.commit()
+    except:
+        print('integrity error')
+        db.session.rollback()
+
     map = Map()
     map.name = "test_map"
+    map.user_id = user.id
     db.session.add(map)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except:
+        print('integrity error')
+        db.session.rollback()
 
     merge = Merge(name="test")
+    merge.user_id = user.id
     db.session.add(merge)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except:
+        print('integrity error')
+        db.session.rollback()
 
     merge_map = MergeMap(x=0, y=0, rotate=0, map_id=map.id, merge_id=merge.id)
     db.session.add(merge_map)
 
     realsense = RealSense(name='test_realsense', current_map_id=map.id)
+    realsense.user_id = user.id
     db.session.add(realsense)
 
     pattern = Pattern(
@@ -26,7 +46,11 @@ if __name__ == "__main__":
         extend_to_bottom=True
     )
     db.session.add(pattern)
-    db.session.commit()
+    try:
+        db.session.commit()
+    except:
+        print('integrity error')
+        db.session.rollback()
 
     blocks = [
         Block(x=1, y=2, z=3, colorID="1", time=datetime.now().timestamp(), map_id=map.id),
