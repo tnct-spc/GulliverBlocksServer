@@ -13,6 +13,11 @@ from threading import Thread
 api_app = Blueprint('api_app', __name__)
 
 
+@api_app.route('/gen_error/')
+def add_block_for_debug(map_id):
+    a = 1/0
+    return make_response('ok')
+
 @api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):
     """
