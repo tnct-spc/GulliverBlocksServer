@@ -14,7 +14,7 @@ api_app = Blueprint('api_app', __name__)
 
 
 @api_app.route('/gen_error/')
-def add_block_for_debug(map_id):
+def gen_fake_error(map_id):
     a = 1/0
     return make_response('ok')
 
