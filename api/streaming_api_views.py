@@ -1,5 +1,5 @@
-from flask import Blueprint, make_response, jsonify, request
-from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap, Pattern, PatternBlock
+from flask import Blueprint, make_response, request
+from api.models import Block, RealSense, Merge, MergeMap, Pattern, PatternBlock
 from api._db import db
 from api._redis import redis_connection
 import json
