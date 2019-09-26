@@ -12,7 +12,7 @@ def model_to_json(model, parse_models, ignore_field_names=None):
         tmp_dict = {}
         for field_name in field_names:
             if field_name not in ignore_field_names:
-                tmp_dict[field_name] = getattr(parse_model, field_name) if str(getattr(parse_model, field_name)) else None
+                tmp_dict["ID" if field_name == "id" else field_name] = getattr(parse_model, field_name) if str(getattr(parse_model, field_name)) else None
         data.append(tmp_dict)
 
     return data
