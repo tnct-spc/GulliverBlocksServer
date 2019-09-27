@@ -112,7 +112,7 @@ class PatternBlock(db.Model):
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
-    username = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, nullable=False, unique=True)
     password_hash = db.Column(db.String, nullable=False)
 
     map = db.relationship('Map', backref='user', lazy=True)
