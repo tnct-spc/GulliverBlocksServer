@@ -1,6 +1,6 @@
 from api._app import app
 from api._db import db
-from flask import redirect
+from flask import redirect, request
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from api.models import *
@@ -18,7 +18,11 @@ class GBModelView(ModelView):
         super(GBModelView, self).__init__(model, session)
 
     def is_accessible(self):
-        return True # TO-DO login必須にする
+        try:
+            request.cookies["user_id"]
+        except KeyError:
+            return False
+        return True
 
     def inaccessible_callback(self, name, **kwargs):
         return redirect('/')
