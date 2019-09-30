@@ -1,5 +1,5 @@
-from flask import Blueprint, make_response, jsonify, request
-from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap, Pattern, PatternBlock
+from flask import Blueprint, make_response, jsonify, request, session
+from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap, Pattern, PatternBlock, User
 from api._db import db
 from api._redis import redis_connection
 import json
@@ -8,9 +8,45 @@ from math import sin, cos, radians
 import copy
 from uuid import uuid4
 from threading import Thread
+from sqlalchemy.dialects.postgresql import UUID
 
 
 api_app = Blueprint('api_app', __name__)
+
+
+def login_required(func):
+    def new_func(*args, **kwargs):
+        try:
+            request.cookies["user_id"]
+        except KeyError:
+            return make_response("you are not logged in")
+        result = func(*args, **kwargs)
+        return result
+    return new_func
+
+
+@api_app.route("/login/", methods=["POST"])
+def login():
+    if request.content_type == "application/json":
+        username = request.json["username"]
+        password = request.json["password"]
+        user = db.session.query(User).filter_by(username=username).first()
+        if user:
+            if user.auth_password(password):
+                session["username"] = username
+                response = make_response("ok")
+                response.set_cookie("user_id", user.id)
+                return response, 200
+        return make_response("invalid username or password")
+    else:
+        return make_response('content type must be application/app'), 406
+
+
+@api_app.route("/logout/")
+def logout():
+    response = make_response("ok")
+    response.set_cookie("user_id", "", expires=0)
+    return response, 200
 
 
 @api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
