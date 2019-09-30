@@ -55,9 +55,9 @@ def add_block(realsense_id):
     for block in blocks:
         try:
             is_put = block['put']
-            block['x']
+            block['x'] -= 24
             block['y']
-            block['z']
+            block['z'] -= 24
         except KeyError:
             return make_response('put, x, y or z missing'), 400
 
