@@ -1,6 +1,7 @@
 from api._db import db
 from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Block(db.Model):
@@ -23,6 +24,7 @@ class Block(db.Model):
 class Map(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
 
     block = db.relationship('Block', backref='map', lazy=True)
     merge_map = db.relationship('MergeMap', backref='map', lazy=True)
@@ -37,6 +39,7 @@ class RealSense(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
     current_map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id'), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
 
     def __repr__(self):
         return "<Realsense(name='%s')>" % self.name
@@ -45,8 +48,10 @@ class RealSense(db.Model):
 class Merge(db.Model):
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
 
-    mereg_map = db.relationship('MergeMap', backref='merge', lazy=True)
+    merge_map = db.relationship('MergeMap', backref='merge', lazy=True)
+
     def __repr__(self):
         return "<Merge(name='%s')>" % self.name
 
@@ -102,3 +107,23 @@ class PatternBlock(db.Model):
 
     def __repr__(self):
         return "<PatternBlock(pattern_id='%s')>" % self.pattern_id
+
+
+class User(db.Model):
+    __tablename__ = 'user'
+    id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
+    username = db.Column(db.String, nullable=False, unique=True)
+    password_hash = db.Column(db.String, nullable=False)
+
+    map = db.relationship('Map', backref='user', lazy=True)
+    realsense = db.relationship('RealSense', backref='user', lazy=True)
+    merge = db.relationship('Merge', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def auth_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def __repr__(self):
+        return "<User(username='%s')>" % self.username
