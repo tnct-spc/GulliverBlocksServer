@@ -1,5 +1,5 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import ColorRule
+from api.models import ColorRule, MergeMap
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 
@@ -21,6 +21,21 @@ def get_color_rules(map_id):
 
     return make_response(jsonify(data))
 
+@color_rule_api_app.route('/get_merged_color_rules/<uuid:merge_id>/')
+def get_merged_color_rules(merge_id):
+    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id).all()
+    rules = []
+    for merge_map in merge_maps:
+        color_rules = db.session.query(ColorRule).filter_by(map_id=merge_map.map_id).all()
+        rules.extend(model_to_json(ColorRule, color_rules, ["id"]))
+    data = {"rules": rules}
+
+    for color_rule_data in data["rules"]:
+        if color_rule_data["type"] == "ID":
+            del color_rule_data["origin"]
+        else:
+            del color_rule_data["block_id"]
+    return make_response(jsonify(data))
 
 @color_rule_api_app.route('/create_color_rule/', methods=["POST"])
 def create_color_rule():
