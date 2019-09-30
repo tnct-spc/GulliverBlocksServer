@@ -8,7 +8,6 @@ from math import sin, cos, radians
 import copy
 from uuid import uuid4
 from threading import Thread
-from sqlalchemy.dialects.postgresql import UUID
 
 
 api_app = Blueprint('api_app', __name__)
