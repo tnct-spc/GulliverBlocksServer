@@ -29,7 +29,7 @@ def login():
                 response = make_response("ok")
                 response.set_cookie("user_id", user.id)
                 return response, 200
-        return make_response("invalid username or password")
+        return make_response("invalid username or password"), 401
     else:
         return make_response('content type must be application/app'), 406
 
