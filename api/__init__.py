@@ -1,4 +1,7 @@
 from flask_migrate import Migrate
+from bugsnag.flask import handle_exceptions
+import bugsnag
+from settings import BUGSNAG_API_KEY, FLASK_ENV
 from api._app import app
 from api._db import db
 from api._socket import sockets
@@ -13,6 +16,13 @@ from api.api_views.color_rule import color_rule_api_app
 from api.api_views.merge import merge_api_app
 from api.api_views.auth import auth_api_app
 
+
+bugsnag.configure(
+    api_key=BUGSNAG_API_KEY,
+    project_root=".",
+    release_stage = FLASK_ENV,
+)
+handle_exceptions(app)
 
 api_apps = [
     map_api_app,
@@ -30,3 +40,5 @@ sockets.register_blueprint(ws)
 app.secret_key = SESSION_SECRET_KEY
 
 Migrate(app, db, compare_type=True)
+
+app.register_blueprint(api_app)
