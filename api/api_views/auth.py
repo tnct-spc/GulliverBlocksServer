@@ -9,7 +9,7 @@ auth_api_app = Blueprint("auth_api_app", __name__)
 def login_required(func):
     def new_func(*args, **kwargs):
         try:
-            user_id = request.cookies["user_id"]
+            user_id = session["user_id"]
         except KeyError:
             return make_response("you are not logged in"), 403
         user = db.session.query(User).filter_by(id=user_id).first()
@@ -28,10 +28,8 @@ def login():
         user = db.session.query(User).filter_by(username=username).first()
         if user:
             if user.auth_password(password):
-                session["username"] = username
-                response = make_response("ok")
-                response.set_cookie("user_id", str(user.id))
-                return response, 200
+                session["user_id"] = str(user.id)
+                return make_response("ok"), 200
         return make_response("invalid username or password"), 401
     else:
         return make_response('content type must be application/app'), 406
@@ -39,9 +37,8 @@ def login():
 
 @auth_api_app.route("/logout/")
 def logout():
-    response = make_response("ok")
-    response.set_cookie("user_id", "", expires=0)
-    return response, 200
+    session.clear()
+    return make_response("ok"), 200
 
 
 @auth_api_app.route("/debug_login/", methods=["GET", "POST"])
@@ -66,9 +63,8 @@ def debug_login():
         user = db.session.query(User).filter_by(username=username).first()
         if user:
             if user.auth_password(password):
-                response = make_response(redirect("/admin/"))
-                response.set_cookie("user_id", str(user.id))
-                return make_response(response), 200
+                session["user_id"] = str(user.id)
+                return make_response(redirect("/admin/")), 200
         return make_response(
             '<!DOCTYPE html>'
             '<html>' +
