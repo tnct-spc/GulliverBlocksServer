@@ -37,7 +37,7 @@ def login():
 
 @auth_api_app.route("/logout/")
 def logout():
-    session.clear()
+    session.pop("user_id", None)
     return make_response("ok"), 200
 
 
