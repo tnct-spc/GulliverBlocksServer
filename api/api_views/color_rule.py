@@ -21,6 +21,7 @@ def get_color_rules(map_id):
 
     return make_response(jsonify(data))
 
+
 @color_rule_api_app.route('/get_merged_color_rules/<uuid:merge_id>/')
 def get_merged_color_rules(merge_id):
     merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id).all()
@@ -36,6 +37,7 @@ def get_merged_color_rules(merge_id):
         else:
             del color_rule_data["block_id"]
     return make_response(jsonify(data))
+
 
 @color_rule_api_app.route('/create_color_rule/', methods=["POST"])
 def create_color_rule():
