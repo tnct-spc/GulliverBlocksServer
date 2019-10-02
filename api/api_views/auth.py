@@ -83,3 +83,9 @@ def debug_login():
             '</body>' +
             '</html>'
         )
+
+
+@auth_api_app.route("/test/")
+@login_required
+def test(user):
+    return make_response(user.username + " is logged in")
