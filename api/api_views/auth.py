@@ -29,8 +29,7 @@ def login():
         if user:
             if user.auth_password(password):
                 session["user_id"] = str(user.id)
-                response = make_response("ok")
-                return response, 200
+                return make_response("ok"), 200
         return make_response("invalid username or password"), 401
     else:
         return make_response('content type must be application/app'), 406
