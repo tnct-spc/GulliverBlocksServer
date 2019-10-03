@@ -65,7 +65,13 @@ def create_color_rule():
             block_id = request.json["block_id"]
             to = request.json["to"]
             map_id = request.json["map_id"]
-            db.session.add(ColorRule(type=type, block_id=block_id, to=to, map_id=map_id))
+            old_color_rule = db.session.query(ColorRule).filter_by(type="ID", block_id=block_id, map_id=map_id).first()
+            # もともとあったら更新する
+            if old_color_rule:
+                old_color_rule.to = to
+                db.session.add(old_color_rule)
+            else:
+                db.session.add(ColorRule(type=type, block_id=block_id, to=to, map_id=map_id))
         else:
             try:
                 request.json["origin"]
@@ -75,7 +81,13 @@ def create_color_rule():
             origin = request.json["origin"]
             to = request.json["to"]
             map_id = request.json["map_id"]
-            db.session.add(ColorRule(type=type, origin=origin, to=to, map_id=map_id))
+            old_color_rule = db.session.query(ColorRule).filter_by(type="color", origin=origin, map_id=map_id).first()
+            # もともとあったら更新する
+            if old_color_rule:
+                old_color_rule.to = to
+                db.session.add(old_color_rule)
+            else:
+                db.session.add(ColorRule(type=type, origin=origin, to=to, map_id=map_id))
 
         try:
             db.session.commit()
