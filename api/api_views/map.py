@@ -1,17 +1,19 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import Map, RealSense
+from api.models import Map, RealSense, User
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
+from api.api_views.user import login_required
 
 
 map_api_app = Blueprint('map_api_app', __name__)
 
 
 @map_api_app.route('/get_maps/')
-def get_maps():
-    maps = db.session.query(Map).all()
+@login_required
+def get_maps(user):
+    maps = db.session.query(Map).filter_by(user_id=user.id).all()
 
-    data = {"maps": model_to_json(Map, maps)}
+    data = {"maps": model_to_json(Map, maps, ["user_id"])}
 
     return make_response(jsonify(data))
 
