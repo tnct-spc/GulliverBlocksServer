@@ -1,19 +1,21 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import Merge, MergeMap, Block
+from api.models import Merge, MergeMap, Block, User
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 from math import sin, cos, radians
 import copy
+from api.api_views.user import login_required
 
 
 merge_api_app = Blueprint('merge_api_app', __name__)
 
 
 @merge_api_app.route('/get_merges/')
-def get_merges():
-    merges = db.session.query(Merge)
+@login_required
+def get_merges(user):
+    merges = db.session.query(Merge).filter_by(user_id=user.id).all()
 
-    data = {"merges": model_to_json(Merge, merges)}
+    data = {"merges": model_to_json(Merge, merges, ["user_id"])}
 
     return make_response(jsonify(data))
 

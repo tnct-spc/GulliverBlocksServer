@@ -3,7 +3,7 @@ from api.models import User
 from api._db import db
 
 
-auth_api_app = Blueprint("auth_api_app", __name__)
+user_api_app = Blueprint("auth_api_app", __name__)
 
 
 def login_required(func):
@@ -20,7 +20,28 @@ def login_required(func):
     return new_func
 
 
-@auth_api_app.route("/login/", methods=["POST"])
+@user_api_app.route("/create_user/", methods=["POST"])
+def create_user():
+    if request.content_type == "application/json":
+        try:
+            username = request.json["username"]
+            password = request.json["password"]
+        except KeyError:
+            return make_response("username or password missing")
+        user = User(username=username)
+        user.set_password(password)
+        db.session.add(user)
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+        return make_response("ok"), 200
+    else:
+        return make_response('content type must be application/app'), 406
+
+
+@user_api_app.route("/login/", methods=["POST"])
 def login():
     if request.content_type == "application/json":
         username = request.json["username"]
@@ -35,13 +56,13 @@ def login():
         return make_response('content type must be application/app'), 406
 
 
-@auth_api_app.route("/logout/")
+@user_api_app.route("/logout/")
 def logout():
     session.clear()
     return make_response("ok"), 200
 
 
-@auth_api_app.route("/debug_login/", methods=["GET", "POST"])
+@user_api_app.route("/debug_login/", methods=["GET", "POST"])
 def debug_login():
     if request.method == "GET":
         return make_response(
@@ -51,7 +72,7 @@ def debug_login():
             '   <p>LOGIN</p>' +
             '   <form method="post", action="">' +
             '       <input type="text" name="username">' +
-            '       <input type="text" name="password">' +
+            '       <input type="password" name="password">' +
             '       <input type="submit">' +
             '   </form>' +
             '</body>' +
@@ -73,7 +94,7 @@ def debug_login():
             '   <p>LOGIN</p>' +
             '   <form method="post", action="">' +
             '       <input type="text" name="username">' +
-            '       <input type="text" name="password">' +
+            '       <input type="password" name="password">' +
             '       <input type="submit">' +
             '   </form>' +
             '</body>' +
