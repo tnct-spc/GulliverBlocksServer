@@ -136,15 +136,6 @@ class User(db.Model):
         return "<User(username='%s')>" % self.username
 
 
-class Share(db.Model):
-    __tablename__ = 'share'
-    id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
-    map_or_merge_id = db.Column(UUID(as_uuid=True), nullable=False)
-
-    def __repr__(self):
-        return "<Share(map_or_merge_id='%s')>" % self.map_or_merge_id
-
-
 class ViewRight(db.Model):
     __tablename__ = 'view_right'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
