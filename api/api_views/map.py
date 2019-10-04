@@ -1,5 +1,5 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import Map, RealSense, User
+from api.models import Map, RealSense, ViewRight
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 from api.api_views.user import login_required
@@ -12,8 +12,15 @@ map_api_app = Blueprint('map_api_app', __name__)
 @login_required
 def get_maps(user):
     maps = db.session.query(Map).filter_by(user_id=user.id).all()
-
     data = {"maps": model_to_json(Map, maps, ["user_id"])}
+
+    view_rights = db.session.query(ViewRight).filter_by(user_id=user.id).all()
+    share_maps = []
+    for view_right in view_rights:
+        share_map = db.session.query(Map).filter_by(id=view_right.map_or_merge_id).first()
+        if share_map:
+            share_maps.append(share_map)
+    data["maps"].extend(model_to_json(Map, share_maps, ["user_id"]))
 
     return make_response(jsonify(data))
 

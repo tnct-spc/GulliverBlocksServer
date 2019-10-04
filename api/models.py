@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Block(db.Model):
+    __tablename__ = 'block'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     x = db.Column(db.Integer, nullable=False)
     y = db.Column(db.Integer, nullable=False)
@@ -22,6 +23,7 @@ class Block(db.Model):
 
 
 class Map(db.Model):
+    __tablename__ = 'map'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
@@ -36,6 +38,7 @@ class Map(db.Model):
 
 
 class RealSense(db.Model):
+    __tablename__ = 'real_sense'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
     current_map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id', ondelete="CASCADE"), nullable=False)
@@ -46,6 +49,7 @@ class RealSense(db.Model):
 
 
 class Merge(db.Model):
+    __tablename__ = 'merge'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     name = db.Column(db.String, nullable=False)
     user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id', ondelete="CASCADE"), nullable=False)
@@ -57,6 +61,7 @@ class Merge(db.Model):
 
 
 class MergeMap(db.Model):
+    __tablename__ = 'merge_map'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id', ondelete="CASCADE"), nullable=False)
     merge_id = db.Column(UUID(as_uuid=True), db.ForeignKey('merge.id', ondelete="CASCADE"), nullable=False)
@@ -69,6 +74,7 @@ class MergeMap(db.Model):
 
 
 class ColorRule(db.Model):
+    __tablename__ = 'color_rule'
     id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
     map_id = db.Column(UUID(as_uuid=True), db.ForeignKey('map.id', ondelete="CASCADE"), nullable=False)
     type = db.Column(db.String, nullable=False)
@@ -118,6 +124,7 @@ class User(db.Model):
     map = db.relationship('Map', cascade="all,delete", backref='user', lazy=True)
     realsense = db.relationship('RealSense', cascade="all,delete", backref='user', lazy=True)
     merge = db.relationship('Merge', cascade="all,delete", backref='user', lazy=True)
+    view_right = db.relationship('ViewRight', cascade="all,delete", backref='user', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -127,3 +134,13 @@ class User(db.Model):
 
     def __repr__(self):
         return "<User(username='%s')>" % self.username
+
+
+class ViewRight(db.Model):
+    __tablename__ = 'view_right'
+    id = db.Column(UUID(as_uuid=True), default=uuid4, primary_key=True)
+    map_or_merge_id = db.Column(UUID(as_uuid=True), nullable=False)
+    user_id = db.Column(UUID(as_uuid=True), db.ForeignKey('user.id'), nullable=False)
+
+    def __repr__(self):
+        return "<ViewRight(map_or_merge_id='%s')>" % self.map_or_merge_id

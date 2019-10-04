@@ -4,7 +4,7 @@ from api._db import db
 from functools import wraps
 
 
-user_api_app = Blueprint("auth_api_app", __name__)
+user_api_app = Blueprint("user_api_app", __name__)
 
 
 def login_required(func):
