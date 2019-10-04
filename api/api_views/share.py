@@ -1,6 +1,6 @@
 from flask import Blueprint, make_response, request, redirect
 from api.models import Share, User, ViewRight
-from api.api_views.auth import login_required
+from api.api_views.user import login_required
 from api._db import db
 
 
