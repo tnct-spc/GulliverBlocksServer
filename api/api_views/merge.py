@@ -1,4 +1,4 @@
-from flask import Blueprint, make_response, jsonify, request
+from flask import Blueprint, make_response, jsonify, request, session
 from api.models import Merge, MergeMap, Block, User
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
@@ -59,6 +59,10 @@ def get_merged_blocks(merge_id):
 
 @merge_api_app.route('/create_merge/', methods=["POST"])
 def create_merge():
+    try:
+        user_id = session["user_id"]
+    except:
+        return make_response("you are not logged in"), 403
     if request.content_type == "application/json":
         try:
             request.json["name"]
@@ -66,7 +70,7 @@ def create_merge():
         except KeyError:
             return make_response('name or merge_maps missing'), 400
 
-        new_merge = Merge(name=request.json["name"])
+        new_merge = Merge(name=request.json["name"], user_id=user_id)
         db.session.add(new_merge)
         try:
             db.session.commit()
