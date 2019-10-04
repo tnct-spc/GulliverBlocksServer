@@ -1,4 +1,4 @@
-from flask import Blueprint, make_response, jsonify, request
+from flask import Blueprint, make_response, jsonify, request, session
 from api.models import Map, RealSense, User
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
@@ -18,17 +18,17 @@ def get_maps(user):
     return make_response(jsonify(data))
 
 
+@login_required
 @map_api_app.route('/create_map/', methods=["POST"])
 def create_map():
     if request.content_type == "application/json":
         try:
             request.json["name"]
-            request.json["realsense_id"]
         except KeyError:
-            return make_response('name or realsense missing'), 400
+            return make_response('name missing'), 400
 
         name = request.json["name"]
-        new_map = Map(name=name)
+        new_map = Map(name=name, user_id=session["user_id"])
         db.session.add(new_map)
         try:
             db.session.commit()
@@ -37,8 +37,7 @@ def create_map():
             return make_response('integrity error'), 500
 
         try:
-            realsense_id = request.json["realsense_id"]
-            realsense = db.session.query(RealSense).filter_by(id=realsense_id).first()
+            realsense = db.session.query(RealSense).first()
             realsense.current_map_id = new_map.id
             db.session.commit()
         except:
