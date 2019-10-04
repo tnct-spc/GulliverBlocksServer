@@ -14,14 +14,13 @@ from api.api_views.block import block_api_app
 from api.api_views.realsense import realsense_api_app
 from api.api_views.color_rule import color_rule_api_app
 from api.api_views.merge import merge_api_app
-from api.api_views.auth import auth_api_app
+from api.api_views.user import user_api_app
 from api.api_views.share import share_api_app
-
 
 bugsnag.configure(
     api_key=BUGSNAG_API_KEY,
     project_root=".",
-    release_stage = FLASK_ENV,
+    release_stage=FLASK_ENV,
 )
 handle_exceptions(app)
 
@@ -31,7 +30,7 @@ api_apps = [
     realsense_api_app,
     color_rule_api_app,
     merge_api_app,
-    auth_api_app,
+    user_api_app,
     share_api_app
 ]
 
@@ -42,5 +41,3 @@ sockets.register_blueprint(ws)
 app.secret_key = SESSION_SECRET_KEY
 
 Migrate(app, db, compare_type=True)
-
-app.register_blueprint(api_app)
