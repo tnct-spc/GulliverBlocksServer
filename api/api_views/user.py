@@ -1,12 +1,14 @@
 from flask import Blueprint, make_response, request, session, redirect
 from api.models import User
 from api._db import db
+from functools import wraps
 
 
 user_api_app = Blueprint("auth_api_app", __name__)
 
 
 def login_required(func):
+    @wraps(func)
     def new_func(*args, **kwargs):
         try:
             user_id = session["user_id"]
