@@ -9,6 +9,7 @@ import json
 from math import sin, cos, radians
 import copy
 from uuid import uuid4
+from time import sleep
 
 
 block_api_app = Blueprint('block_api_app', __name__)
@@ -163,6 +164,7 @@ def merged_blocks_change_streaming(message, map_id):
 
 
 def recognize_pattern(blocks, map_id):
+    sleep(0.5)
     """
     patterns sample
     {
