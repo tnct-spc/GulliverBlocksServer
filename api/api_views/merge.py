@@ -118,3 +118,15 @@ def create_merge():
         return make_response('ok')
     else:
         return make_response('content type must be application/json'), 406
+@merge_api_app.route('/update_merge/', methods=["POST"])
+def update_merge():
+    if request.content_type != "application/json":
+        return make_response('content type must be application/json'), 406
+    try:
+        name = request.json["name"]
+        world_id = request.json["WorldId"]
+    except KeyError:
+        return make_response('name or WorldId missing'), 400
+    db.session.query(Merge).filter_by(id=world_id).first().name = name
+    db.session.commit()
+    return make_response('ok')
