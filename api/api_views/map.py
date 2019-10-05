@@ -59,3 +59,17 @@ def create_map():
         return make_response(jsonify(map_data))
     else:
         return make_response('content type must be application/app'), 406
+
+@map_api_app.route('/update_map/', methods=["POST"])
+def update_merge():
+    if request.content_type != "application/json":
+        return make_response('content type must be application/json'), 406
+    try:
+        name = request.json["name"]
+        world_id = request.json["WorldId"]
+    except KeyError:
+        return make_response('name or WorldId missing'), 400
+    db.session.query(Map).filter_by(id=world_id).first().name = name
+    db.session.commit()
+    return make_response('ok')
+
