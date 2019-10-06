@@ -22,6 +22,16 @@ def get_blocks(map_id):
 
     return make_response(jsonify(data))
 
+@block_api_app.route('/get_current_state/<uuid:realsense_id>/')
+def get_current_state(realsense_id):
+    map_id = db.session.query(RealSense).filter_by(id=realsense_id).first().current_map_id
+    blocks = db.session.query(Block).filter_by(map_id=map_id)
+
+    data = {"blocks": model_to_json(Block, blocks)}
+
+    return make_response(jsonify(data))
+
+
 
 @block_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):
@@ -334,11 +344,10 @@ def recognize_pattern(blocks, map_id):
             pattern_group_id = uuid4()
             for found_block in found_blocks:
                 tmp_found_blocks.append(found_block)
-                if not found_block.pattern_name:
-                    found_block.pattern_group_id = pattern_group_id
-                    found_block.pattern_name = pattern.name
-                    changed_pattern_blocks.append(found_block)
-                    db.session.add(found_block)
+                found_block.pattern_group_id = pattern_group_id
+                found_block.pattern_name = pattern.name
+                changed_pattern_blocks.append(found_block)
+                db.session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
