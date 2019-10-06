@@ -22,6 +22,16 @@ def get_blocks(map_id):
 
     return make_response(jsonify(data))
 
+@block_api_app.route('/get_current_state/<uuid:realsense_id>/')
+def get_current_state(realsense_id):
+    map_id = db.session.query(RealSense).filter_by(id=realsense_id).first().current_map_id
+    blocks = db.session.query(Block).filter_by(map_id=map_id)
+
+    data = {"blocks": model_to_json(Block, blocks)}
+
+    return make_response(jsonify(data))
+
+
 
 @block_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):

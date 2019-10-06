@@ -1,5 +1,5 @@
-from flask import Blueprint, make_response, jsonify, request, session
-from api.models import Merge, MergeMap, Block, User
+from flask import Blueprint, make_response, jsonify, request
+from api.models import Merge, MergeMap, Block, ViewRight
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 from math import sin, cos, radians
@@ -14,8 +14,15 @@ merge_api_app = Blueprint('merge_api_app', __name__)
 @login_required
 def get_merges(user):
     merges = db.session.query(Merge).filter_by(user_id=user.id).all()
-
     data = {"merges": model_to_json(Merge, merges, ["user_id"])}
+
+    view_rights = db.session.query(ViewRight).filter_by(user_id=user.id).all()
+    share_merges = []
+    for view_right in view_rights:
+        share_merge = db.session.query(Merge).filter_by(id=view_right.map_or_merge_id).first()
+        if share_merge:
+            share_merges.append(share_merge)
+    data["merges"].extend(model_to_json(Merge, share_merges, ["user_id"]))
 
     return make_response(jsonify(data))
 
@@ -112,3 +119,15 @@ def create_merge(user):
         return make_response('ok')
     else:
         return make_response('content type must be application/json'), 406
+@merge_api_app.route('/update_merge/', methods=["POST"])
+def update_merge():
+    if request.content_type != "application/json":
+        return make_response('content type must be application/json'), 406
+    try:
+        name = request.json["name"]
+        world_id = request.json["WorldId"]
+    except KeyError:
+        return make_response('name or WorldId missing'), 400
+    db.session.query(Merge).filter_by(id=world_id).first().name = name
+    db.session.commit()
+    return make_response('ok')
