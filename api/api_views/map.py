@@ -26,16 +26,16 @@ def get_maps(user):
 
 
 @map_api_app.route('/create_map/', methods=["POST"])
-def create_map():
+@login_required
+def create_map(user):
     if request.content_type == "application/json":
         try:
             request.json["name"]
-            request.json["realsense_id"]
         except KeyError:
-            return make_response('name or realsense missing'), 400
+            return make_response('name missing'), 400
 
         name = request.json["name"]
-        new_map = Map(name=name)
+        new_map = Map(name=name, user_id=user.id)
         db.session.add(new_map)
         try:
             db.session.commit()
@@ -44,8 +44,7 @@ def create_map():
             return make_response('integrity error'), 500
 
         try:
-            realsense_id = request.json["realsense_id"]
-            realsense = db.session.query(RealSense).filter_by(id=realsense_id).first()
+            realsense = db.session.query(RealSense).first()
             realsense.current_map_id = new_map.id
             db.session.commit()
         except:
