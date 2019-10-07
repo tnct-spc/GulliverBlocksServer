@@ -28,4 +28,4 @@ def share(map_or_merge_id):
     elif db.session.query(Merge).filter_by(id=map_or_merge_id).first():
         return redirect("gulliverblocks://merge/" + str(map_or_merge_id))
     else:
-        return make_response("world not found"), 404
+        return make_response("this world not found"), 404
