@@ -18,4 +18,9 @@ def receive_share(user, map_or_merge_id):
         except:
             return make_response('integrity error'), 500
 
-    return make_response(redirect("/"))
+    return make_response("ok"), 200
+
+
+@share_api_app.route("/share/<uuid:map_or_merge_id>/")
+def share(map_or_merge_id):
+    return redirect("gulliverblocks://map/" + str(map_or_merge_id))
