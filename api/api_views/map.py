@@ -59,16 +59,30 @@ def create_map(user):
     else:
         return make_response('content type must be application/app'), 406
 
-@map_api_app.route('/update_map/', methods=["POST"])
-def update_merge():
+@map_api_app.route('/update_map/', methods=["post"])
+def update_map():
     if request.content_type != "application/json":
         return make_response('content type must be application/json'), 406
     try:
         name = request.json["name"]
-        world_id = request.json["WorldId"]
+        world_id = request.json["ID"]
     except KeyError:
-        return make_response('name or WorldId missing'), 400
+        return make_response('name or worldid missing'), 400
     db.session.query(Map).filter_by(id=world_id).first().name = name
+    db.session.commit()
+    return make_response('ok')
+
+
+@map_api_app.route('/del_map/', methods=["post"])
+def del_map():
+    if request.content_type != "application/json":
+        return make_response('content type must be application/json'), 406
+    try:
+        world_id = request.json["ID"]
+    except KeyError:
+        return make_response('worldid missing'), 400
+    map = db.session.query(Map).filter_by(id=world_id).first()
+    db.session.delete(map)
     db.session.commit()
     return make_response('ok')
 
