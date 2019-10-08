@@ -1,5 +1,5 @@
 from flask import Blueprint, make_response, request, redirect
-from api.models import ViewRight
+from api.models import ViewRight, Map, Merge
 from api.api_views.user import login_required
 from api._db import db
 
@@ -18,4 +18,14 @@ def receive_share(user, map_or_merge_id):
         except:
             return make_response('integrity error'), 500
 
-    return make_response(redirect("/"))
+    return make_response("ok"), 200
+
+
+@share_api_app.route("/share/<uuid:map_or_merge_id>/")
+def share(map_or_merge_id):
+    if db.session.query(Map).filter_by(id=map_or_merge_id).first():
+        return redirect("gulliverblocks://map/" + str(map_or_merge_id))
+    elif db.session.query(Merge).filter_by(id=map_or_merge_id).first():
+        return redirect("gulliverblocks://merge/" + str(map_or_merge_id))
+    else:
+        return make_response("this world not found"), 404
