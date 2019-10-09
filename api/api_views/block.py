@@ -103,13 +103,6 @@ def add_block(realsense_id):
     except:
         return make_response('integrity error'), 500
 
-    # ブロックのパターン認識を非同期でする
-    # _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-    # thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
-    # thread.start()
-    _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-    recognize_pattern(blocks=_blocks, map_id=map_id)
-
     # websocket 配信
     message = {
         'blocks': []
@@ -136,6 +129,13 @@ def add_block(realsense_id):
     # mergeに含まれるブロックが変更されていたらそのデータを配信する
     if db.session.query(MergeMap).filter_by(map_id=map_id).count() > 0:
         merged_blocks_change_streaming(message=message, map_id=map_id)
+
+    # ブロックのパターン認識を非同期でする
+    # _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+    # thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
+    # thread.start()
+    _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+    recognize_pattern(blocks=_blocks, map_id=map_id)
 
     return make_response("ok")
 
