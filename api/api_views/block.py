@@ -104,9 +104,11 @@ def add_block(realsense_id):
         return make_response('integrity error'), 500
 
     # ブロックのパターン認識を非同期でする
+    # _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+    # thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
+    # thread.start()
     _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-    thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
-    thread.start()
+    recognize_pattern(blocks=_blocks, map_id=map_id)
 
     # websocket 配信
     message = {
