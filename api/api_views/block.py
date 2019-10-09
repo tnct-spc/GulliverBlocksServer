@@ -60,6 +60,10 @@ def add_block(realsense_id):
         blocks = request.json['blocks']
     except KeyError:
         return make_response('blocks parameter missing'), 400
+
+    if not blocks:
+        return make_response("ok"), 200
+
     put_blocks = []
     delete_blocks = []
     for block in blocks:
