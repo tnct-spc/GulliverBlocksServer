@@ -12,6 +12,7 @@ from uuid import uuid4
 
 
 block_api_app = Blueprint('block_api_app', __name__)
+recognizing_thread = Thread()
 
 
 @block_api_app.route('/get_blocks/<uuid:map_id>/')
@@ -30,7 +31,6 @@ def get_current_state(realsense_id):
     data = {"blocks": model_to_json(Block, blocks)}
 
     return make_response(jsonify(data))
-
 
 
 @block_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
@@ -104,9 +104,11 @@ def add_block(realsense_id):
         return make_response('integrity error'), 500
 
     # ブロックのパターン認識を非同期でする
-    _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-    thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
-    thread.start()
+    global recognizing_thread
+    if not recognizing_thread.is_alive():
+        _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+        recognizing_thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
+        recognizing_thread.start()
 
     # websocket 配信
     message = {
@@ -336,6 +338,7 @@ def recognize_pattern(blocks, map_id):
                 found_patterns[pattern_name].append(tmp_blocks)
 
     # dbに反映
+    current_session = db.create_scoped_session()
     tmp_found_blocks = []
     changed_pattern_blocks = []
     for pattern_name, found_objects in found_patterns.items():
@@ -347,16 +350,16 @@ def recognize_pattern(blocks, map_id):
                 found_block.pattern_group_id = pattern_group_id
                 found_block.pattern_name = pattern.name
                 changed_pattern_blocks.append(found_block)
-                db.session.add(found_block)
+                current_session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
             block.pattern_name = None
             block.pattern_group_id = None
             changed_pattern_blocks.append(block)
-            db.session.add(block)
+            current_session.add(block)
     try:
-        db.session.commit()
+        current_session.commit()
     except:
         db.session.rollback()
         return make_response('integrity error'), 500
