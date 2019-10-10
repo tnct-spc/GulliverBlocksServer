@@ -60,6 +60,10 @@ def add_block(realsense_id):
         blocks = request.json['blocks']
     except KeyError:
         return make_response('blocks parameter missing'), 400
+
+    if not blocks:
+        return make_response("ok"), 200
+
     put_blocks = []
     delete_blocks = []
     for block in blocks:
@@ -338,7 +342,6 @@ def recognize_pattern(blocks, map_id):
                 found_patterns[pattern_name].append(tmp_blocks)
 
     # dbに反映
-    current_session = db.create_scoped_session()
     tmp_found_blocks = []
     changed_pattern_blocks = []
     for pattern_name, found_objects in found_patterns.items():
@@ -350,16 +353,16 @@ def recognize_pattern(blocks, map_id):
                 found_block.pattern_group_id = pattern_group_id
                 found_block.pattern_name = pattern.name
                 changed_pattern_blocks.append(found_block)
-                current_session.add(found_block)
+                db.session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
             block.pattern_name = None
             block.pattern_group_id = None
             changed_pattern_blocks.append(block)
-            current_session.add(block)
+            db.session.add(block)
     try:
-        current_session.commit()
+        db.session.commit()
     except:
         db.session.rollback()
         return make_response('integrity error'), 500
