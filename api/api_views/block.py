@@ -434,8 +434,9 @@ def merge_found_object(pattern, found_pattern_objects, merge_base_object, merged
 
 
 import datetime
+from api.models import Map
 from flask import redirect, render_template
-@api_app.route("/debug/<uuid:map_id>/", methods=["GET", "POST"])
+@block_api_app.route("/debug/<uuid:map_id>/", methods=["GET", "POST"])
 def degug(map_id):
     if request.method == "GET":
         return render_template("debug.html")
