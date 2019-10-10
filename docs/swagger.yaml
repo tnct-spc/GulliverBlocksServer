@@ -320,9 +320,6 @@ paths:
               name:
                 type: "string"
                 example: "test_map"
-              realsense_id:
-                type: "string"
-                format: "uuid"
       responses:
         200:
           description: "ok"

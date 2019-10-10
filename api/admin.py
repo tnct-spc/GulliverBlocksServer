@@ -1,6 +1,6 @@
 from api._app import app
 from api._db import db
-from flask import redirect, request
+from flask import redirect, session
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from api.models import *
@@ -19,7 +19,7 @@ class GBModelView(ModelView):
 
     def is_accessible(self):
         try:
-            request.cookies["user_id"]
+            session["user_id"]
         except KeyError:
             return False
         return True
@@ -45,3 +45,4 @@ admin.add_view(GBModelView(ColorRule, db.session, column_filters=["map"]))
 admin.add_view(GBModelView(Pattern, db.session))
 admin.add_view(GBModelView(PatternBlock, db.session, column_filters=["pattern"]))
 admin.add_view(GBModelView(User, db.session, column_filters=["username"]))
+admin.add_view((GBModelView(ViewRight, db.session, column_filters=["user"])))

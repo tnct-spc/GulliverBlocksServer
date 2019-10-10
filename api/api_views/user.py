@@ -1,15 +1,17 @@
 from flask import Blueprint, make_response, request, session, redirect
 from api.models import User
 from api._db import db
+from functools import wraps
 
 
-auth_api_app = Blueprint("auth_api_app", __name__)
+user_api_app = Blueprint("user_api_app", __name__)
 
 
 def login_required(func):
+    @wraps(func)
     def new_func(*args, **kwargs):
         try:
-            user_id = request.cookies["user_id"]
+            user_id = session["user_id"]
         except KeyError:
             return make_response("you are not logged in"), 403
         user = db.session.query(User).filter_by(id=user_id).first()
@@ -20,7 +22,28 @@ def login_required(func):
     return new_func
 
 
-@auth_api_app.route("/login/", methods=["POST"])
+@user_api_app.route("/create_user/", methods=["POST"])
+def create_user():
+    if request.content_type == "application/json":
+        try:
+            username = request.json["username"]
+            password = request.json["password"]
+        except KeyError:
+            return make_response("username or password missing")
+        user = User(username=username)
+        user.set_password(password)
+        db.session.add(user)
+        try:
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return make_response('integrity error'), 500
+        return make_response("ok"), 200
+    else:
+        return make_response('content type must be application/app'), 406
+
+
+@user_api_app.route("/login/", methods=["POST"])
 def login():
     if request.content_type == "application/json":
         username = request.json["username"]
@@ -28,23 +51,20 @@ def login():
         user = db.session.query(User).filter_by(username=username).first()
         if user:
             if user.auth_password(password):
-                session["username"] = username
-                response = make_response("ok")
-                response.set_cookie("user_id", str(user.id))
-                return response, 200
+                session["user_id"] = str(user.id)
+                return make_response("ok"), 200
         return make_response("invalid username or password"), 401
     else:
         return make_response('content type must be application/app'), 406
 
 
-@auth_api_app.route("/logout/")
+@user_api_app.route("/logout/")
 def logout():
-    response = make_response("ok")
-    response.set_cookie("user_id", "", expires=0)
-    return response, 200
+    session.clear()
+    return make_response("ok"), 200
 
 
-@auth_api_app.route("/debug_login/", methods=["GET", "POST"])
+@user_api_app.route("/debug_login/", methods=["GET", "POST"])
 def debug_login():
     if request.method == "GET":
         return make_response(
@@ -54,7 +74,7 @@ def debug_login():
             '   <p>LOGIN</p>' +
             '   <form method="post", action="">' +
             '       <input type="text" name="username">' +
-            '       <input type="text" name="password">' +
+            '       <input type="password" name="password">' +
             '       <input type="submit">' +
             '   </form>' +
             '</body>' +
@@ -66,9 +86,8 @@ def debug_login():
         user = db.session.query(User).filter_by(username=username).first()
         if user:
             if user.auth_password(password):
-                response = make_response(redirect("/admin/"))
-                response.set_cookie("user_id", str(user.id))
-                return make_response(response), 200
+                session["user_id"] = str(user.id)
+                return make_response(redirect("/admin/")), 200
         return make_response(
             '<!DOCTYPE html>'
             '<html>' +
@@ -77,7 +96,7 @@ def debug_login():
             '   <p>LOGIN</p>' +
             '   <form method="post", action="">' +
             '       <input type="text" name="username">' +
-            '       <input type="text" name="password">' +
+            '       <input type="password" name="password">' +
             '       <input type="submit">' +
             '   </form>' +
             '</body>' +

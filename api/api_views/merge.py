@@ -1,19 +1,28 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import Merge, MergeMap, Block
+from api.models import Merge, MergeMap, Block, ViewRight
 from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 from math import sin, cos, radians
 import copy
+from api.api_views.user import login_required
 
 
 merge_api_app = Blueprint('merge_api_app', __name__)
 
 
 @merge_api_app.route('/get_merges/')
-def get_merges():
-    merges = db.session.query(Merge)
+@login_required
+def get_merges(user):
+    merges = db.session.query(Merge).filter_by(user_id=user.id).all()
+    data = {"merges": model_to_json(Merge, merges, ["user_id"])}
 
-    data = {"merges": model_to_json(Merge, merges)}
+    view_rights = db.session.query(ViewRight).filter_by(user_id=user.id).all()
+    share_merges = []
+    for view_right in view_rights:
+        share_merge = db.session.query(Merge).filter_by(id=view_right.map_or_merge_id).first()
+        if share_merge:
+            share_merges.append(share_merge)
+    data["merges"].extend(model_to_json(Merge, share_merges, ["user_id"]))
 
     return make_response(jsonify(data))
 
@@ -56,7 +65,8 @@ def get_merged_blocks(merge_id):
 
 
 @merge_api_app.route('/create_merge/', methods=["POST"])
-def create_merge():
+@login_required
+def create_merge(user):
     if request.content_type == "application/json":
         try:
             request.json["name"]
@@ -64,7 +74,7 @@ def create_merge():
         except KeyError:
             return make_response('name or merge_maps missing'), 400
 
-        new_merge = Merge(name=request.json["name"])
+        new_merge = Merge(name=request.json["name"], user_id=user.id)
         db.session.add(new_merge)
         try:
             db.session.commit()
@@ -109,3 +119,15 @@ def create_merge():
         return make_response('ok')
     else:
         return make_response('content type must be application/json'), 406
+@merge_api_app.route('/update_merge/', methods=["POST"])
+def update_merge():
+    if request.content_type != "application/json":
+        return make_response('content type must be application/json'), 406
+    try:
+        name = request.json["name"]
+        world_id = request.json["WorldId"]
+    except KeyError:
+        return make_response('name or WorldId missing'), 400
+    db.session.query(Merge).filter_by(id=world_id).first().name = name
+    db.session.commit()
+    return make_response('ok')
