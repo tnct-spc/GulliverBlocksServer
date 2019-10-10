@@ -179,6 +179,8 @@ def merged_blocks_change_streaming(message, map_id):
 
 
 def recognize_pattern(blocks, map_id):
+    # TODO: もっとマシなadd update順序問題の解法を見つける
+    time.sleep(0.5)
     """
     patterns sample
     {
