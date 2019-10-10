@@ -1,19 +1,39 @@
 from flask import Blueprint, make_response, jsonify, request
-from api.models import Block, Map, RealSense, ColorRule, Merge, MergeMap, Pattern, PatternBlock
+from api.models import Block, RealSense, MergeMap, Merge, Pattern, PatternBlock
+from api.api_views.parse_help_lib import model_to_json
 from api._db import db
 from api._redis import redis_connection
-import json
 import time
+from threading import Thread
+import json
 from math import sin, cos, radians
 import copy
 from uuid import uuid4
-from threading import Thread
 
 
-api_app = Blueprint('api_app', __name__)
+block_api_app = Blueprint('block_api_app', __name__)
 
 
-@api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
+@block_api_app.route('/get_blocks/<uuid:map_id>/')
+def get_blocks(map_id):
+    blocks = db.session.query(Block).filter_by(map_id=map_id)
+
+    data = {"blocks": model_to_json(Block, blocks)}
+
+    return make_response(jsonify(data))
+
+@block_api_app.route('/get_current_state/<uuid:realsense_id>/')
+def get_current_state(realsense_id):
+    map_id = db.session.query(RealSense).filter_by(id=realsense_id).first().current_map_id
+    blocks = db.session.query(Block).filter_by(map_id=map_id)
+
+    data = {"blocks": model_to_json(Block, blocks)}
+
+    return make_response(jsonify(data))
+
+
+
+@block_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
 def add_block_for_debug(map_id):
     """
     postされたものをそのままwebsocketに流すコード, debug用
@@ -26,7 +46,7 @@ def add_block_for_debug(map_id):
     return make_response('ok')
 
 
-@api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
+@block_api_app.route('/add_blocks/<uuid:realsense_id>/', methods=["POST"])
 def add_block(realsense_id):
     """
     blockを追加/削除するapi
@@ -45,9 +65,9 @@ def add_block(realsense_id):
     for block in blocks:
         try:
             is_put = block['put']
-            block['x']
+            block['x'] -= 24
             block['y']
-            block['z']
+            block['z'] -= 24
         except KeyError:
             return make_response('put, x, y or z missing'), 400
 
@@ -62,9 +82,10 @@ def add_block(realsense_id):
 
     deleted_block_ids = []
     for b in delete_blocks:
-        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z']).first()
-        deleted_block_ids.append(block_object.id)
-        db.session.delete(block_object)
+        block_object = db.session.query(Block).filter_by(x=b['x'], y=b['y'], z=b['z'], map_id=map_id).first()
+        if block_object:
+            deleted_block_ids.append(block_object.id)
+            db.session.delete(block_object)
     put_block_objects = [
         Block(
             x=b['x'],
@@ -127,13 +148,14 @@ def merged_blocks_change_streaming(message, map_id):
                 ブロックの座標移動処理
             """
             changed_block = copy.deepcopy(_changed_block)
-            rad = radians(90 * merge_map.rotate)
-            tmp_x = changed_block["x"]
-            tmp_y = changed_block["y"]
-            changed_block["x"] = round(tmp_x * cos(rad) - tmp_y * sin(rad))
-            changed_block["y"] = round(tmp_y * cos(rad) + tmp_x * sin(rad))
-            changed_block["x"] += merge_map.x
-            changed_block["y"] += merge_map.y
+            if changed_block["status"] == "add":
+                rad = radians(90 * merge_map.rotate)
+                tmp_x = changed_block["x"]
+                tmp_z = changed_block["z"]
+                changed_block["x"] = round(tmp_x * cos(rad) - tmp_z * sin(rad))
+                changed_block["z"] = round(tmp_z * cos(rad) + tmp_x * sin(rad))
+                changed_block["x"] += merge_map.x
+                changed_block["z"] += merge_map.y
 
             if merge.id in changed_merges.keys():
                 changed_merges[merge.id].append(changed_block)
@@ -148,285 +170,6 @@ def merged_blocks_change_streaming(message, map_id):
         redis_connection.publish('received_message', json.dumps(data))
 
     return
-
-
-@api_app.route('/get_blocks/<uuid:map_id>/')
-def get_blocks(map_id):
-    blocks = db.session.query(Block).filter_by(map_id=map_id)
-
-    data = {
-        "blocks": [],
-    }
-    for block in blocks:
-        data["blocks"].append({
-            "ID": block.id,
-            "colorID": block.colorID,
-            "time": block.time,
-            "x": block.x,
-            "y": block.y,
-            "z": block.z,
-            "pattern_name": block.pattern_name,
-            "pattern_group_id": str(block.pattern_group_id) if block.pattern_group_id else None
-        })
-
-    return make_response(jsonify(data))
-
-
-@api_app.route('/get_maps/')
-def get_maps():
-    maps = db.session.query(Map)
-    maps_data = {
-        "maps": []
-    }
-    for map in maps:
-        tmp_dic = {
-            "ID": map.id,
-            "name": map.name
-        }
-        maps_data["maps"].append(tmp_dic)
-
-    return make_response(jsonify(maps_data))
-
-
-@api_app.route('/create_map/', methods=["POST"])
-def create_map():
-    if request.content_type == "application/json":
-        try:
-            request.json["name"]
-        except KeyError:
-            return make_response('name missing'), 400
-
-        name = request.json["name"]
-        new_map = Map(name=name)
-        db.session.add(new_map)
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-            return make_response('integrity error'), 500
-
-        map_data = {
-            "ID": new_map.id,
-            "name": name
-        }
-        return make_response(jsonify(map_data))
-    else:
-        return make_response('content type must be application/app'), 406
-
-
-@api_app.route('/get_color_rules/<uuid:map_id>/')
-def get_color_rules(map_id):
-    color_rules = db.session.query(ColorRule).filter_by(map_id=map_id)
-    data = {
-        "rules": []
-    }
-    for rule in color_rules:
-        if rule.type == "ID":
-            data["rules"].append({
-                "type": rule.type,
-                "block_id": rule.block_id,
-                "to": rule.to,
-                "map_id": rule.map_id
-            })
-        else:
-            data["rules"].append({
-                "type": rule.type,
-                "origin": rule.origin,
-                "to": rule.to,
-                "map_id": rule.map_id
-            })
-    return make_response(jsonify(data))
-
-
-@api_app.route('/create_color_rule/', methods=["POST"])
-def create_color_rule():
-    if request.content_type == "application/json":
-        try:
-            request.json["map_id"]
-        except KeyError:
-            return make_response('map_id missing'), 400
-        try:
-            request.json["type"]
-        except KeyError:
-            return make_response('type missing'), 400
-        try:
-            request.json["to"]
-        except KeyError:
-            return make_response('to missing'), 400
-
-        type = request.json["type"]
-        if type == "ID":
-            try:
-                request.json["block_id"]
-            except KeyError:
-                return make_response('block_id missing'), 400
-
-            block_id = request.json["block_id"]
-            to = request.json["to"]
-            map_id = request.json["map_id"]
-            db.session.add(ColorRule(type=type, block_id=block_id, to=to, map_id=map_id))
-        else:
-            try:
-                request.json["origin"]
-            except KeyError:
-                return make_response('origin missing'), 400
-
-            origin = request.json["origin"]
-            to = request.json["to"]
-            map_id = request.json["map_id"]
-            db.session.add(ColorRule(type=type, origin=origin, to=to, map_id=map_id))
-
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-            return make_response('integrity error'), 500
-
-        return make_response("ok")
-    else:
-        return make_response('content type must be application/app'), 406
-
-
-@api_app.route('/get_merges/')
-def get_merges():
-    merges = db.session.query(Merge)
-    data = {
-        "merges": []
-    }
-    for merge in merges:
-        data["merges"].append({
-            "ID": merge.id,
-            "name": merge.name
-        })
-    return make_response(jsonify(data))
-
-
-@api_app.route('/create_merge/', methods=["POST"])
-def create_merge():
-    if request.content_type == "application/json":
-        try:
-            request.json["name"]
-        except KeyError:
-            return make_response('name missing'), 400
-
-        new_merge = Merge(name=request.json["name"])
-        db.session.add(new_merge)
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-            return make_response('integrity error'), 500
-
-        return make_response(jsonify({"message": "ok", "merge_id": str(new_merge.id)}))
-    else:
-        return make_response('content type must be application/json'), 406
-
-
-@api_app.route('/get_merge_maps/<uuid:merge_id>/')
-def get_merge_maps(merge_id):
-    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id)
-    data = {
-        "merge_maps": []
-    }
-    for merge_map in merge_maps:
-        data["merge_maps"].append({
-            "map_id": merge_map.map_id,
-            "x": merge_map.x,
-            "y": merge_map.y,
-            "rotate": merge_map.rotate
-        })
-    return make_response(jsonify(data))
-
-
-@api_app.route('/create_merge_map/', methods=["POST"])
-def create_merge_map():
-    if request.content_type == "application/json":
-        try:
-            request.json["merge_maps"]
-        except KeyError:
-            return make_response('merge_map data missing'), 400
-        try:
-            request.json["merge_id"]
-        except KeyError:
-            return make_response('merge_id missing'), 400
-
-        merge_maps = request.json["merge_maps"]
-        merge_map_objects = []
-        for merge_map_data in merge_maps:
-            try:
-                merge_map_data["map_id"]
-            except KeyError:
-                return make_response('map_id missing'), 400
-            try:
-                merge_map_data["x"]
-                merge_map_data["y"]
-            except KeyError:
-                return make_response('x or y missing'), 400
-            try:
-                merge_map_data["rotate"]
-            except KeyError:
-                return make_response('rotate missing'), 400
-
-            merge_map_objects.append(
-                MergeMap(
-                    map_id=merge_map_data["map_id"],
-                    merge_id=request.json["merge_id"],
-                    x=merge_map_data["x"],
-                    y=merge_map_data["y"],
-                    rotate=merge_map_data["rotate"]
-                )
-            )
-        db.session.bulk_save_objects(merge_map_objects, return_defaults=True)
-        try:
-            db.session.commit()
-        except:
-            db.session.rollback()
-            return make_response('integrity error'), 500
-
-        return make_response('ok')
-    else:
-        return make_response('content type must be application/json'), 406
-
-
-@api_app.route('/get_merged_blocks/<uuid:merge_id>/')
-def get_merged_blocks(merge_id):
-    merge_maps = db.session.query(MergeMap).filter_by(merge_id=merge_id).all()
-    merged_blocks = []
-
-    for merge_map in merge_maps:
-        blocks = db.session.query(Block).filter_by(map_id=merge_map.map_id).all()
-        for _block in blocks:
-            """
-            ブロックの座標移動処理
-            """
-            block = copy.deepcopy(_block)
-            rad = radians(90 * merge_map.rotate)
-            tmp_x = block.x
-            tmp_y = block.y
-            block.x = round(tmp_x * cos(rad) - tmp_y * sin(rad))
-            block.y = round(tmp_y * cos(rad) + tmp_x * sin(rad))
-
-            block.x += merge_map.x
-            block.y += merge_map.y
-
-            merged_blocks.append(block)
-
-    data = {
-        "blocks": [],
-    }
-    for merged_block in merged_blocks:
-        data["blocks"].append({
-            "ID": merged_block.id,
-            "colorID": merged_block.colorID,
-            "time": merged_block.time,
-            "x": merged_block.x,
-            "y": merged_block.y,
-            "z": merged_block.z,
-            "pattern_name": merged_block.pattern_name,
-            "pattern_group_id": str(merged_block.pattern_group_id) if merged_block.pattern_group_id else None
-        })
-
-    return make_response(jsonify(data))
 
 
 def recognize_pattern(blocks, map_id):
@@ -601,11 +344,10 @@ def recognize_pattern(blocks, map_id):
             pattern_group_id = uuid4()
             for found_block in found_blocks:
                 tmp_found_blocks.append(found_block)
-                if not found_block.pattern_name:
-                    found_block.pattern_group_id = pattern_group_id
-                    found_block.pattern_name = pattern.name
-                    changed_pattern_blocks.append(found_block)
-                    db.session.add(found_block)
+                found_block.pattern_group_id = pattern_group_id
+                found_block.pattern_name = pattern.name
+                changed_pattern_blocks.append(found_block)
+                db.session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:

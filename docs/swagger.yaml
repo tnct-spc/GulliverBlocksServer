@@ -12,6 +12,7 @@ tags:
  - name: block
  - name: merge
  - name: colorRule
+ - name: realsense
 paths:
   /get_maps/:
     get:
@@ -371,34 +372,6 @@ paths:
               name:
                 type: "string"
                 example: "test_merge"
-      responses:
-        200:
-          description: "作成されたmergeのid"
-          schema:
-            type: "object"
-            properties:
-              merge_id:
-                type: "string"
-                format: "uuid"
-              message:
-                type: "string"
-                example: "ok"
-
-  /create_merge_maps/:
-    post:
-      tags:
-        - merge
-      summary: "merge_maps作成"
-      parameters:
-        -
-          name: info
-          in: body
-          schema:
-            type: "object"
-            properties:
-              merge_id:
-                type: "string"
-                format: "uuid"
               merge_maps:
                 type: "array"
                 items:
@@ -420,7 +393,47 @@ paths:
                       description: "mapのmergeするときの回転 1,2,3,4"
       responses:
         200:
-          description: "ok"
+          description: "作成されたmergeのid"
+          schema:
+            type: "object"
+            properties:
+              merge_id:
+                type: "string"
+                format: "uuid"
+              message:
+                type: "string"
+                example: "ok"
+  /get_realsense/:
+    get:
+      tags:
+        - realsense
+      summary: "realsense 一覧取得"
+      description: ""
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "realsense 一覧"
+          schema:
+            type: "object"
+            properties:
+              realsense:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    is_online:
+                      type: "boolean"
+                      example: "true"
+                      description: "onlineかどうか, 現状常にtrue"
+                    name:
+                      type: "string"
+                      example: "test_realsense"
+                      description: "realsenseの名前"
+                    current_map:
+                      type: "string"
+                      example: "test_map"
+                      description: "現在設定されてるmap"
 definitions:
   Block:
     type: "object"
