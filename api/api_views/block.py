@@ -12,7 +12,6 @@ from uuid import uuid4
 
 
 block_api_app = Blueprint('block_api_app', __name__)
-recognizing_thread = Thread()
 
 
 @block_api_app.route('/get_blocks/<uuid:map_id>/')
@@ -108,11 +107,9 @@ def add_block(realsense_id):
         return make_response('integrity error'), 500
 
     # ブロックのパターン認識を非同期でする
-    global recognizing_thread
-    if not recognizing_thread.is_alive():
-        _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-        recognizing_thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
-        recognizing_thread.start()
+    _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+    recognizing_thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
+    recognizing_thread.start()
 
     # websocket 配信
     message = {
