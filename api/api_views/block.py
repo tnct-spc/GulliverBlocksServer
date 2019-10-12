@@ -12,6 +12,7 @@ from uuid import uuid4
 
 
 block_api_app = Blueprint('block_api_app', __name__)
+recognizing_thread = Thread()
 
 
 @block_api_app.route('/get_blocks/<uuid:map_id>/')
@@ -30,7 +31,6 @@ def get_current_state(realsense_id):
     data = {"blocks": model_to_json(Block, blocks)}
 
     return make_response(jsonify(data))
-
 
 
 @block_api_app.route('/debug_add_blocks/<uuid:map_id>/', methods=["POST"])
@@ -60,6 +60,10 @@ def add_block(realsense_id):
         blocks = request.json['blocks']
     except KeyError:
         return make_response('blocks parameter missing'), 400
+
+    if not blocks:
+        return make_response("ok"), 200
+
     put_blocks = []
     delete_blocks = []
     for block in blocks:
@@ -104,9 +108,11 @@ def add_block(realsense_id):
         return make_response('integrity error'), 500
 
     # ブロックのパターン認識を非同期でする
-    _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
-    thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
-    thread.start()
+    global recognizing_thread
+    if not recognizing_thread.is_alive():
+        _blocks = db.session.query(Block).filter_by(map_id=map_id).all()
+        recognizing_thread = Thread(target=recognize_pattern, args=(_blocks, map_id))
+        recognizing_thread.start()
 
     # websocket 配信
     message = {
@@ -173,6 +179,11 @@ def merged_blocks_change_streaming(message, map_id):
 
 
 def recognize_pattern(blocks, map_id):
+    # TODO: もっとマシなadd update順序問題の解法を見つける
+    time.sleep(0.5)
+
+    current_session = db.create_scoped_session()
+
     """
     patterns sample
     {
@@ -215,11 +226,11 @@ def recognize_pattern(blocks, map_id):
     }
     """
     # PatternとPatternBlockを使いやすいように加工する
-    _patterns = db.session.query(Pattern).all()
+    _patterns = current_session.query(Pattern).all()
     patterns = {}
     for patten in _patterns:
         patterns[patten.name] = {}
-        patterns[patten.name]["blocks"] = db.session.query(PatternBlock).filter_by(pattern_id=patten.id).all()
+        patterns[patten.name]["blocks"] = current_session.query(PatternBlock).filter_by(pattern_id=patten.id).all()
         patterns[patten.name]["blocks"].sort(key=lambda b: b.x**2 + b.y**2 + b.z**2)
 
         patterns[patten.name]["extend_directions"] = []
@@ -339,7 +350,7 @@ def recognize_pattern(blocks, map_id):
     tmp_found_blocks = []
     changed_pattern_blocks = []
     for pattern_name, found_objects in found_patterns.items():
-        pattern = db.session.query(Pattern).filter_by(name=pattern_name).first()
+        pattern =current_session.query(Pattern).filter_by(name=pattern_name).first()
         for found_blocks in found_objects:
             pattern_group_id = uuid4()
             for found_block in found_blocks:
@@ -347,18 +358,18 @@ def recognize_pattern(blocks, map_id):
                 found_block.pattern_group_id = pattern_group_id
                 found_block.pattern_name = pattern.name
                 changed_pattern_blocks.append(found_block)
-                db.session.add(found_block)
+                current_session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
             block.pattern_name = None
             block.pattern_group_id = None
             changed_pattern_blocks.append(block)
-            db.session.add(block)
+            current_session.add(block)
     try:
-        db.session.commit()
+        current_session.commit()
     except:
-        db.session.rollback()
+        current_session.rollback()
         return make_response('integrity error'), 500
 
     # websocket配信
