@@ -134,7 +134,7 @@ def update_merge():
     return make_response('ok')
 
 @merge_api_app.route('/del_merge/', methods=["post"])
-def del_map():
+def del_merge():
     if request.content_type != "application/json":
         return make_response('content type must be application/json'), 406
     try:
