@@ -129,13 +129,17 @@ def add_block(realsense_id):
         "time": block.time,
         "x": block.x,
         "y": block.y,
-        "z": block.z
+        "z": block.z,
+        "pattern_name": str(block.pattern_name),
+        "pattern_group_id": str(block.pattern_group_id)
     } for block in put_block_objects])
     data = {
         'message': message,
         'map_id': str(map_id)
     }
-    redis_connection.publish('received_message', json.dumps(data))
+    streaming_json = json.dumps(data)
+    streaming_json = streaming_json.replace("None", "null")
+    redis_connection.publish('received_message', streaming_json)
 
     # mergeに含まれるブロックが変更されていたらそのデータを配信する
     if db.session.query(MergeMap).filter_by(map_id=map_id).count() > 0:
@@ -173,7 +177,9 @@ def merged_blocks_change_streaming(message, map_id):
             'merge_id': str(merge_id),
             'message': {'blocks': blocks}
         }
-        redis_connection.publish('received_message', json.dumps(data))
+        streaming_json = json.dumps(data)
+        streaming_json = streaming_json.replace("None", "null")
+        redis_connection.publish('received_message', streaming_json)
 
     return
 
@@ -386,14 +392,16 @@ def recognize_pattern(blocks, map_id):
                 "z": changed_pattern_block.z,
                 "colorID": changed_pattern_block.colorID,
                 "time": changed_pattern_block.time,
-                "pattern_name": changed_pattern_block.pattern_name,
+                "pattern_name": str(changed_pattern_block.pattern_name),
                 "pattern_group_id": str(changed_pattern_block.pattern_group_id)
             })
         data = {
             "map_id": str(map_id),
             "message": message
         }
-        redis_connection.publish("received_message", json.dumps(data))
+        streaming_json = json.dumps(data)
+        streaming_json = streaming_json.replace("None", "null")
+        redis_connection.publish('received_message', streaming_json)
 
     return found_patterns
 
