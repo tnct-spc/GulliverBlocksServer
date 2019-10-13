@@ -5,7 +5,6 @@ from api._db import db
 from api._redis import redis_connection
 import time
 from threading import Thread
-import json
 from math import sin, cos, radians
 import copy
 from uuid import uuid4
@@ -42,7 +41,7 @@ def add_block_for_debug(map_id):
         'message': request.json,
         'map_id': str(map_id)
     }
-    redis_connection.publish('received_message', json.dumps(data))
+    redis_connection.publish('received_message', jsonify(data))
     return make_response('ok')
 
 
@@ -135,7 +134,7 @@ def add_block(realsense_id):
         'message': message,
         'map_id': str(map_id)
     }
-    redis_connection.publish('received_message', json.dumps(data))
+    redis_connection.publish('received_message', jsonify(data))
 
     # mergeに含まれるブロックが変更されていたらそのデータを配信する
     if db.session.query(MergeMap).filter_by(map_id=map_id).count() > 0:
@@ -173,7 +172,7 @@ def merged_blocks_change_streaming(message, map_id):
             'merge_id': str(merge_id),
             'message': {'blocks': blocks}
         }
-        redis_connection.publish('received_message', json.dumps(data))
+        redis_connection.publish('received_message', jsonify(data))
 
     return
 
@@ -393,7 +392,7 @@ def recognize_pattern(blocks, map_id):
             "map_id": str(map_id),
             "message": message
         }
-        redis_connection.publish("received_message", json.dumps(data))
+        redis_connection.publish("received_message", jsonify(data))
 
     return found_patterns
 
