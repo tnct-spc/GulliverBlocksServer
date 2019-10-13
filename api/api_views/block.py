@@ -395,6 +395,7 @@ def recognize_pattern(blocks, map_id):
         }
         redis_connection.publish("received_message", json.dumps(data))
 
+    current_session.close()
     return found_patterns
 
 
