@@ -359,12 +359,20 @@ def recognize_pattern(blocks, map_id):
         pattern =current_session.query(Pattern).filter_by(name=pattern_name).first()
         for found_blocks in found_objects:
             pattern_group_id = uuid4()
+            # すでにブロックがなくなっていたら追加しないようにする
+            does_block_exist = True
             for found_block in found_blocks:
-                tmp_found_blocks.append(found_block)
-                found_block.pattern_group_id = pattern_group_id
-                found_block.pattern_name = pattern.name
-                changed_pattern_blocks.append(found_block)
-                current_session.add(found_block)
+                b = current_session.query(Block).filter_by(id=found_block.id).scalar()
+                if b is None:
+                    does_block_exist = False
+            if does_block_exist:
+                for found_block in found_blocks:
+                    # ブロックの追加
+                    tmp_found_blocks.append(found_block)
+                    found_block.pattern_group_id = pattern_group_id
+                    found_block.pattern_name = pattern.name
+                    changed_pattern_blocks.append(found_block)
+                    current_session.add(found_block)
     # パターンでなくなったブロックの処理
     for block in target_blocks:
         if block.pattern_name and block not in tmp_found_blocks:
